@@ -38,7 +38,7 @@ public class GameController {
         Game existingGame = gameRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid game Id:" + id));
 
-        // Update fields
+        // Update fields available in edit form
         existingGame.setStatus(game.getStatus());
         existingGame.setNotes(game.getNotes());
         

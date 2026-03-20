@@ -58,6 +58,8 @@ public class DataInitializer implements CommandLineRunner {
         game1.setStatus("Completed");
         game1.setRating(10.0);
         game1.setNotes("Masterpiece");
+        // Using placeholder for demo purposes
+        game1.setCoverUrl("https://placehold.co/300x400/2ecc71/ffffff.png?text=Zelda+BotW");
         gameRepository.save(game1);
 
         Game game2 = new Game();
@@ -67,6 +69,7 @@ public class DataInitializer implements CommandLineRunner {
         game2.setGenre(rpg);
         game2.setStatus("Playing");
         game2.setRating(9.5);
+        game2.setCoverUrl("https://placehold.co/300x400/e67e22/ffffff.png?text=Elden+Ring");
         gameRepository.save(game2);
         
         Game game3 = new Game();
@@ -75,6 +78,7 @@ public class DataInitializer implements CommandLineRunner {
         game3.setPlatform(pc);
         game3.setGenre(platformer);
         game3.setStatus("Backlog");
+        game3.setCoverUrl("https://placehold.co/300x400/34495e/ffffff.png?text=Hollow+Knight");
         gameRepository.save(game3);
 
         System.out.println("Sample data loaded...");
