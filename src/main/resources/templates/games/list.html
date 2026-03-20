@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Lista de Juegos - JGameDatabase</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="/">JGameDatabase</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="/games">Juegos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/games/new">Añadir Juego</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Mi Colección de Juegos</h2>
+            <a href="/games/new" class="btn btn-success">
+                <i class="bi bi-plus-lg"></i> Añadir Juego
+            </a>
+        </div>
+
+        <div th:if="${#lists.isEmpty(games)}" class="alert alert-info" role="alert">
+            No hay juegos registrados en tu colección. ¡Empieza añadiendo uno!
+        </div>
+
+        <div th:unless="${#lists.isEmpty(games)}" class="table-responsive">
+            <table class="table table-striped table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">Título</th>
+                        <th scope="col">Plataforma</th>
+                        <th scope="col">Género</th>
+                        <th scope="col">Año</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Rating</th>
+                        <th scope="col">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="game : ${games}">
+                        <td class="fw-bold" th:text="${game.title}">The Legend of Zelda</td>
+                        <td th:text="${game.platform != null} ? ${game.platform.name} : '-'">Nintendo Switch</td>
+                        <td th:text="${game.genre != null} ? ${game.genre.name} : '-'">Adventure</td>
+                        <td th:text="${game.releaseYear}">2017</td>
+                        <td>
+                            <span class="badge rounded-pill"
+                                  th:text="${game.status}"
+                                  th:classappend="${game.status == 'Completed' ? 'bg-success' : (game.status == 'Playing' ? 'bg-primary' : (game.status == 'Backlog' ? 'bg-secondary' : 'bg-warning text-dark'))}">
+                                Completed
+                            </span>
+                        </td>
+                        <td>
+                             <span class="badge bg-warning text-dark" th:if="${game.rating != null}" th:text="${game.rating}">9.5</span>
+                             <span th:if="${game.rating == null}">-</span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="#" class="btn btn-sm btn-outline-primary">Editar</a>
+                                <a href="#" class="btn btn-sm btn-outline-danger">Eliminar</a>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
