@@ -42,5 +42,8 @@ Aplicación web para gestionar una colección personal de videojuegos: catálogo
 * Usar una **JDK compatible con el wrapper de Gradle del proyecto** (p. ej. **Java 21** alineado con `build.gradle`).
 * Si el IDE usa una JVM demasiado nueva para Gradle, ajustar **Gradle JVM** en el IDE o usar `./gradlew` desde terminal con JDK 21.
 
+## CI / Docker Hub
+* Workflow **GitHub Actions** (`.github/workflows/docker-publish.yml`): construye la imagen con el `Dockerfile` y la publica en Docker Hub al hacer push a `main`/`master`, al etiquetar `v*` o manualmente. Requiere secretos `DOCKERHUB_USERNAME` y `DOCKERHUB_TOKEN` en el repositorio.
+
 ## Documentación de usuario
-* Instalación, configuración y arranque: ver **README.md** en la raíz del repositorio.
+* Instalación, configuración, arranque y despliegue Docker: ver **README.md** en la raíz del repositorio.
