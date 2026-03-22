@@ -1,42 +1,46 @@
 # Contexto del Proyecto: jGameDatabase
 
-## Descripción General
-Aplicación web para la gestión de una colección personal de videojuegos. Permite listar, añadir, editar y eliminar juegos, gestionando relaciones con plataformas y géneros.
+## Descripción general
+Aplicación web para gestionar una colección personal de videojuegos: catálogo en colección, lista de deseados, búsqueda vía IGDB, precios vía GG.deals (Steam), exportación/importación CSV, notas en Markdown en la ficha de detalle y enlaces externos (Metacritic, IGDB, Steam).
 
-## Stack Tecnológico
-*   **Lenguaje**: Java 21
-*   **Framework**: Spring Boot 3.2.3
-*   **Build Tool**: Gradle 8.7 (Wrapper configurado)
-*   **Base de Datos**: H2 Database (En memoria para desarrollo)
-*   **Persistencia**: Spring Data JPA (Hibernate)
-*   **Frontend**: Thymeleaf (Motor de plantillas) + Bootstrap 5.3.0 (CSS Framework)
+## Stack tecnológico
+* **Lenguaje**: Java 21 (toolchain en Gradle)
+* **Framework**: Spring Boot 3.2.x
+* **Build**: Gradle (wrapper incluido)
+* **Base de datos**: H2 en archivo (`./data/jgamedatabase`), consola H2 habilitada en desarrollo
+* **Persistencia**: Spring Data JPA (Hibernate)
+* **Cliente HTTP**: WebClient (WebFlux) para IGDB, GG.deals y búsqueda en la tienda Steam
+* **Frontend**: Thymeleaf + Bootstrap 5
+* **Markdown**: commonmark-java + Jsoup (HTML saneado en notas)
 
-## Estructura del Proyecto
-El proyecto sigue una arquitectura MVC estándar de Spring Boot:
-*   `xyz.sanchon.jgamedatabase.model`: Entidades JPA (`Game`, `Platform`, `Genre`).
-*   `xyz.sanchon.jgamedatabase.repository`: Interfaces `JpaRepository`.
-*   `xyz.sanchon.jgamedatabase.controller`: Controladores Web (`HomeController`, `GameController`).
-*   `xyz.sanchon.jgamedatabase.bootstrap`: Carga de datos iniciales (`DataInitializer`).
+## Estructura del proyecto (MVC)
+* `xyz.sanchon.jgamedatabase.model`: entidades JPA (`Game`, `Platform`, `Genre`).
+* `xyz.sanchon.jgamedatabase.repository`: repositorios Spring Data.
+* `xyz.sanchon.jgamedatabase.controller`: `HomeController`, `GameController` (rutas bajo `/games`, detalle, wishlist, APIs auxiliares).
+* `xyz.sanchon.jgamedatabase.service`: lógica (IGDB, GG.deals, Steam store search, CSV, Markdown).
+* `xyz.sanchon.jgamedatabase.dto`: DTOs de APIs externas.
+* `xyz.sanchon.jgamedatabase.bootstrap`: datos iniciales opcionales (`DataInitializer`).
+* `src/main/resources/templates`: vistas Thymeleaf.
+* Perfiles: `application.properties` + `application-local.properties` (secretos; ver `.gitignore`).
 
-## Modelo de Datos
-1.  **Game**: Entidad principal.
-    *   Relación `ManyToOne` con `Platform`.
-    *   Relación `ManyToOne` con `Genre`.
-    *   Atributos: `title`, `releaseYear`, `status` (Playing, Completed, etc.), `rating`, `notes`, `igdbId`.
-2.  **Platform**: Catálogo de plataformas (e.g., PS5, Switch).
-3.  **Genre**: Catálogo de géneros (e.g., RPG, Action).
+## Modelo de datos (resumen)
+* **Game**: título, año, plataforma, género, estado (colección), `wishlist`, valoración, notas (Markdown), `igdbId`, `igdbSlug`, `coverUrl`, `steamAppId`.
+* **Platform** / **Genre**: catálogos reutilizables.
 
-## Estado Actual de Desarrollo
-*   [x] Configuración inicial del proyecto (Gradle, Spring Boot).
-*   [x] Definición de Entidades y Repositorios.
-*   [x] Carga de datos de prueba (`DataInitializer`) al arrancar.
-*   [x] Pantalla de Inicio (`index.html`).
-*   [x] Listado de Juegos (`games/list.html`).
-*   [ ] Formulario para añadir nuevo juego (`games/create.html`).
-*   [ ] Edición de juegos existentes.
-*   [ ] Eliminación de juegos.
+## Integraciones externas
+* **IGDB** (vía Twitch OAuth client credentials): búsqueda de juegos; opcionalmente datos auxiliares.
+* **Steam Store Search** (`store.steampowered.com/api/storesearch/`): localizar Steam App ID al añadir a deseados.
+* **GG.deals** (`api.gg.deals/v1/prices/by-steam-app-id/`): precios por lista de Steam App IDs y región configurable.
 
-## Notas del Entorno (Importante)
-*   **Problema Detectado**: Se ha detectado un conflicto de versiones con Gradle ejecutándose sobre una JVM muy reciente (posiblemente Java 26 / Class version 70), lo cual es incompatible con las versiones actuales de Gradle.
-*   **Solución Requerida**: Configurar el IDE para usar una **Gradle JVM** compatible (Java 17 o Java 21).
-*   **Configuración Gradle**: `sourceCompatibility` y `targetCompatibility` están fijados en Java 17 en el archivo `build.gradle`.
+## Estado de desarrollo (referencia)
+* CRUD de juegos, colección vs wishlist, filtros en listado (auto-submit), ordenación conservando filtros.
+* Búsqueda IGDB, alta desde resultados, detalle `/games/detail/{id}`, edición de notas Markdown en detalle.
+* Precios GG.deals en colección y en deseados (bajo demanda en wishlist).
+* Import/export CSV.
+
+## Entorno y Gradle
+* Usar una **JDK compatible con el wrapper de Gradle del proyecto** (p. ej. **Java 21** alineado con `build.gradle`).
+* Si el IDE usa una JVM demasiado nueva para Gradle, ajustar **Gradle JVM** en el IDE o usar `./gradlew` desde terminal con JDK 21.
+
+## Documentación de usuario
+* Instalación, configuración y arranque: ver **README.md** en la raíz del repositorio.
