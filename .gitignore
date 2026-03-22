@@ -39,3 +39,6 @@ out/
 ### Secrets ###
 **/*-local.properties
 .env
+
+### Database ###
+data/

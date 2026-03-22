@@ -42,6 +42,8 @@ public class GameController {
     public String listGames(@RequestParam(required = false) String status,
                             @RequestParam(required = false) Long genreId,
                             @RequestParam(required = false) Long platformId,
+                            @RequestParam(defaultValue = "title") String sortBy,
+                            @RequestParam(defaultValue = "asc") String sortDir,
                             Model model) {
         
         Specification<Game> spec = Specification.where(null);
@@ -58,15 +60,22 @@ public class GameController {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("platform").get("id"), platformId));
         }
 
-        List<Game> games = gameRepository.findAll(spec);
+        org.springframework.data.domain.Sort sort = sortDir.equalsIgnoreCase("asc") ? 
+            org.springframework.data.domain.Sort.by(sortBy).ascending() : 
+            org.springframework.data.domain.Sort.by(sortBy).descending();
+
+        List<Game> games = gameRepository.findAll(spec, sort);
         model.addAttribute("games", games);
         model.addAttribute("genres", genreRepository.findAll());
         model.addAttribute("platforms", platformRepository.findAll());
         
-        // Pass back current filters to the model
+        // Pass back current filters and sorting to the model
         model.addAttribute("selectedStatus", status);
         model.addAttribute("selectedGenre", genreId);
         model.addAttribute("selectedPlatform", platformId);
+        model.addAttribute("sortBy", sortBy);
+        model.addAttribute("sortDir", sortDir);
+        model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
         
         return "games/list";
     }

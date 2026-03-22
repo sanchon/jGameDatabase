@@ -65,6 +65,8 @@
         <div class="card mb-4 bg-light shadow-sm">
             <div class="card-body">
                 <form th:action="@{/games}" method="get" class="row g-3">
+                    <input type="hidden" name="sortBy" th:value="${sortBy}">
+                    <input type="hidden" name="sortDir" th:value="${sortDir}">
                     <div class="col-md-3">
                         <label for="status" class="form-label small fw-bold">Estado</label>
                         <select name="status" id="status" class="form-select form-select-sm">
@@ -123,13 +125,55 @@
                 <thead class="table-dark">
                     <tr>
                         <th scope="col" style="width: 80px;">Carátula</th>
-                        <th scope="col">Título</th>
-                        <th scope="col">Plataforma</th>
-                        <th scope="col">Género</th>
-                        <th scope="col">Año</th>
-                        <th scope="col">Estado</th>
-                        <th scope="col">Rating</th>
-                        <th scope="col">Acciones</th>
+                        <th scope="col">
+                            <a th:href="@{/games(status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform}, sortBy='title', sortDir=${sortBy == 'title' ? reverseSortDir : 'asc'})}" 
+                               class="text-white text-decoration-none d-flex align-items-center justify-content-between">
+                                Título
+                                <i th:if="${sortBy == 'title'}" th:class="${sortDir == 'asc' ? 'bi bi-sort-alpha-down' : 'bi bi-sort-alpha-up'}"></i>
+                                <i th:unless="${sortBy == 'title'}" class="bi bi-arrow-down-up small opacity-50"></i>
+                            </a>
+                        </th>
+                        <th scope="col">
+                            <a th:href="@{/games(status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform}, sortBy='platform.name', sortDir=${sortBy == 'platform.name' ? reverseSortDir : 'asc'})}" 
+                               class="text-white text-decoration-none d-flex align-items-center justify-content-between">
+                                Plataforma
+                                <i th:if="${sortBy == 'platform.name'}" th:class="${sortDir == 'asc' ? 'bi bi-sort-alpha-down' : 'bi bi-sort-alpha-up'}"></i>
+                                <i th:unless="${sortBy == 'platform.name'}" class="bi bi-arrow-down-up small opacity-50"></i>
+                            </a>
+                        </th>
+                        <th scope="col">
+                            <a th:href="@{/games(status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform}, sortBy='genre.name', sortDir=${sortBy == 'genre.name' ? reverseSortDir : 'asc'})}" 
+                               class="text-white text-decoration-none d-flex align-items-center justify-content-between">
+                                Género
+                                <i th:if="${sortBy == 'genre.name'}" th:class="${sortDir == 'asc' ? 'bi bi-sort-alpha-down' : 'bi bi-sort-alpha-up'}"></i>
+                                <i th:unless="${sortBy == 'genre.name'}" class="bi bi-arrow-down-up small opacity-50"></i>
+                            </a>
+                        </th>
+                        <th scope="col">
+                            <a th:href="@{/games(status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform}, sortBy='releaseYear', sortDir=${sortBy == 'releaseYear' ? reverseSortDir : 'asc'})}" 
+                               class="text-white text-decoration-none d-flex align-items-center justify-content-between">
+                                Año
+                                <i th:if="${sortBy == 'releaseYear'}" th:class="${sortDir == 'asc' ? 'bi bi-sort-numeric-down' : 'bi bi-sort-numeric-up'}"></i>
+                                <i th:unless="${sortBy == 'releaseYear'}" class="bi bi-arrow-down-up small opacity-50"></i>
+                            </a>
+                        </th>
+                        <th scope="col">
+                            <a th:href="@{/games(status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform}, sortBy='status', sortDir=${sortBy == 'status' ? reverseSortDir : 'asc'})}" 
+                               class="text-white text-decoration-none d-flex align-items-center justify-content-between">
+                                Estado
+                                <i th:if="${sortBy == 'status'}" th:class="${sortDir == 'asc' ? 'bi bi-sort-alpha-down' : 'bi bi-sort-alpha-up'}"></i>
+                                <i th:unless="${sortBy == 'status'}" class="bi bi-arrow-down-up small opacity-50"></i>
+                            </a>
+                        </th>
+                        <th scope="col">
+                            <a th:href="@{/games(status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform}, sortBy='rating', sortDir=${sortBy == 'rating' ? reverseSortDir : 'asc'})}" 
+                               class="text-white text-decoration-none d-flex align-items-center justify-content-between">
+                                Rating
+                                <i th:if="${sortBy == 'rating'}" th:class="${sortDir == 'asc' ? 'bi bi-sort-numeric-down' : 'bi bi-sort-numeric-up'}"></i>
+                                <i th:unless="${sortBy == 'rating'}" class="bi bi-arrow-down-up small opacity-50"></i>
+                            </a>
+                        </th>
+                        <th scope="col" class="text-white">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
