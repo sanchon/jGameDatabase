@@ -118,3 +118,71 @@ java -jar build/libs/jGameDatabase-0.0.1-SNAPSHOT.jar
 
 - **Hot reload**: Spring DevTools está incluido como dependencia de desarrollo; recarga al cambiar código según configuración del IDE.
 - **Gradle JVM**: si el IDE falla al sincronizar Gradle, asigna explícitamente **JDK 21** como JVM de Gradle.
+
+---
+
+## Docker y Docker Hub
+
+El repositorio incluye un `Dockerfile` multi-etapa (JDK 21 → JRE, usuario no root, volumen para H2) y un `.dockerignore` para acelerar el contexto de build.
+
+### Publicación automática con GitHub Actions
+
+El workflow [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) construye la imagen y la sube a **Docker Hub** cuando:
+
+- se hace **push** a las ramas `main` o `master`, o
+- se publica un **tag** semántico `v*` (p. ej. `v1.2.0`), o
+- se lanza manualmente desde la pestaña **Actions** → **Publish Docker image** → **Run workflow**.
+
+**Secretos del repositorio** (en GitHub: *Settings → Secrets and variables → Actions*):
+
+| Secreto | Descripción |
+|---------|-------------|
+| `DOCKERHUB_USERNAME` | Tu usuario de Docker Hub |
+| `DOCKERHUB_TOKEN` | [Access Token](https://docs.docker.com/security/for-developers/access-tokens/) de Docker Hub (recomendado; no uses la contraseña principal si puedes evitarlo) |
+
+La imagen se publica como **`<usuario>/jgamedatabase`** con etiquetas:
+
+- `latest` (solo en la rama por defecto del repositorio),
+- versión tipo `1.2.0` al empujar un tag `v1.2.0`,
+- `sha-<corto>` con el commit.
+
+Tras el primer push correcto, en Docker Hub aparecerá el repositorio de imagen correspondiente.
+
+### Construcción y subida manual (opcional)
+
+Si prefieres no usar CI:
+
+```bash
+docker login
+docker build -t <tu_usuario>/jgamedatabase:latest .
+docker push <tu_usuario>/jgamedatabase:latest
+```
+
+### Ejecutar el contenedor (servidor o local)
+
+Cualquier usuario con Docker instalado (o en tu servidor Linux de producción) puede ejecutar la aplicación siguiendo estos pasos:
+
+```bash
+docker run -d \
+  --name jgamedatabase \
+  -p 8080:8080 \
+  -v jgamedatabase-data:/app/data \
+  -e IGDB_CLIENT_ID="tu_client_id_aqui" \
+  -e IGDB_CLIENT_SECRET="tu_client_secret_aqui" \
+  -e GGDEALS_API_KEY="tu_api_key_aqui" \
+  --restart unless-stopped \
+  <tu_usuario_docker>/jgamedatabase:latest
+```
+
+**Explicación de los parámetros principales:**
+- `-d`: Ejecuta el contenedor en segundo plano (detached mode).
+- `-p 8080:8080`: Mapea el puerto 8080 del servidor al puerto 8080 del contenedor. La aplicación será accesible en `http://localhost:8080` (o la IP del servidor).
+- `-v jgamedatabase-data:/app/data`: Crea un **volumen persistente**. Esto es crítico para que la base de datos H2 no se borre si el contenedor se apaga o actualiza.
+- `-e ...`: Variables de entorno necesarias para las integraciones de IGDB y GG.deals. Reemplaza con tus propias credenciales.
+- `--restart unless-stopped`: Asegura que el contenedor arranque automáticamente si el servidor se reinicia o Docker se reinicia.
+
+**Ver los logs (opcional):**
+Si quieres comprobar que la aplicación ha arrancado correctamente, puedes ver los registros con:
+```bash
+docker logs -f jgamedatabase
+```

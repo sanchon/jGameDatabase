@@ -1,0 +1,24 @@
+# Git y entorno
+.git
+.gitignore
+.github
+*.md
+
+# Gradle / build local
+.gradle
+build
+out
+bin
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# Datos locales y secretos (no deben entrar en la capa de contexto)
+data
+**/application-local.properties
+.env
+
+# Agentes / transcripts
+agent-transcripts
