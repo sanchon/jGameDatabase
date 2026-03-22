@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Lista de Juegos - JGameDatabase</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
@@ -41,13 +41,81 @@
     <div class="container">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Mi Colección de Juegos</h2>
-            <a href="/games/new" class="btn btn-success">
-                <i class="bi bi-plus-lg"></i> Añadir Juego
-            </a>
+            <div class="d-flex gap-2 align-items-center">
+                <form th:action="@{/games/import}" method="post" enctype="multipart/form-data" class="d-flex align-items-center m-0">
+                    <input class="form-control form-control-sm me-2" type="file" name="file" accept=".csv" required style="max-width: 200px;">
+                    <button type="submit" class="btn btn-outline-primary btn-sm text-nowrap">
+                        <i class="bi bi-upload"></i> Importar
+                    </button>
+                </form>
+                <a href="/games/export" class="btn btn-outline-secondary btn-sm text-nowrap">
+                    <i class="bi bi-download"></i> Exportar
+                </a>
+                <a href="/games/new" class="btn btn-success btn-sm text-nowrap">
+                    <i class="bi bi-plus-lg"></i> Añadir
+                </a>
+            </div>
         </div>
 
-        <div th:if="${#lists.isEmpty(games)}" class="alert alert-info" role="alert">
-            No hay juegos registrados en tu colección. ¡Empieza añadiendo uno!
+        <div th:if="${param.error}" class="alert alert-danger shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> Error al importar el archivo CSV. Comprueba que el formato sea correcto.
+        </div>
+
+        <!-- Filtros -->
+        <div class="card mb-4 bg-light shadow-sm">
+            <div class="card-body">
+                <form th:action="@{/games}" method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="status" class="form-label small fw-bold">Estado</label>
+                        <select name="status" id="status" class="form-select form-select-sm">
+                            <option value="">Todos los estados</option>
+                            <option value="Backlog" th:selected="${selectedStatus == 'Backlog'}">Sin Empezar (Backlog)</option>
+                            <option value="Playing" th:selected="${selectedStatus == 'Playing'}">Jugando</option>
+                            <option value="Completed" th:selected="${selectedStatus == 'Completed'}">Terminado</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="genreId" class="form-label small fw-bold">Género</label>
+                        <select name="genreId" id="genreId" class="form-select form-select-sm">
+                            <option value="">Todos los géneros</option>
+                            <option th:each="g : ${genres}" 
+                                    th:value="${g.id}" 
+                                    th:text="${g.name}"
+                                    th:selected="${selectedGenre == g.id}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="platformId" class="form-label small fw-bold">Plataforma</label>
+                        <select name="platformId" id="platformId" class="form-select form-select-sm">
+                            <option value="">Todas las plataformas</option>
+                            <option th:each="p : ${platforms}" 
+                                    th:value="${p.id}" 
+                                    th:text="${p.name}"
+                                    th:selected="${selectedPlatform == p.id}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <div class="btn-group w-100 shadow-sm">
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-funnel-fill"></i> Filtrar
+                            </button>
+                            <a th:href="@{/games}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-arrow-counterclockwise"></i> Limpiar
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div th:if="${#lists.isEmpty(games)}" class="alert alert-info shadow-sm" role="alert">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            <span th:if="${(selectedStatus != null && !selectedStatus.isEmpty()) || selectedGenre != null || selectedPlatform != null}">
+                No se han encontrado juegos que coincidan con los filtros seleccionados.
+            </span>
+            <span th:unless="${(selectedStatus != null && !selectedStatus.isEmpty()) || selectedGenre != null || selectedPlatform != null}">
+                No hay juegos registrados en tu colección. ¡Empieza añadiendo uno!
+            </span>
         </div>
 
         <div th:unless="${#lists.isEmpty(games)}" class="table-responsive">
@@ -67,8 +135,7 @@
                 <tbody>
                     <tr th:each="game : ${games}">
                         <td>
-                            <img th:src="${game.coverUrl}" th:alt="${game.title}" class="cover-image shadow-sm"
-                                 onerror="this.onerror=null; this.src='https://placehold.co/300x400/cccccc/ffffff.png?text=N/A';"/>
+                            <img th:src="${game.coverUrl}" th:alt="${game.title}" class="cover-image shadow-sm"/>
                         </td>
                         <td>
                             <a th:href="@{/games/edit/{id}(id=${game.id})}"
@@ -109,5 +176,12 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('error', function (event) {
+            if (event.target.tagName.toLowerCase() === 'img' && event.target.classList.contains('cover-image')) {
+                event.target.src = 'https://placehold.co/300x400/cccccc/ffffff.png?text=N/A';
+            }
+        }, true);
+    </script>
 </body>
 </html>

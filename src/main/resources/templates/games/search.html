@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Buscar Juego - JGameDatabase</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
 <body>
@@ -39,7 +39,7 @@
                 <h4 class="mb-3">Resultados de la búsqueda</h4>
                 <div class="list-group">
                     <a th:each="game : ${results}"
-                       th:href="@{/games/create(igdbId=${game.id}, title=${game.name}, year=${game.firstReleaseDate}, cover=${game.cover != null ? game.cover.url : ''})}"
+                       th:href="@{/games/create(igdbId=${game.id}, title=${game.name}, year=${game.firstReleaseDate != null ? #dates.format(new java.util.Date(game.firstReleaseDate * 1000), 'yyyy') : null}, cover=${game.cover != null ? game.cover.url : ''})}"
                        class="list-group-item list-group-item-action d-flex align-items-center gap-3">
 
                         <img th:if="${game.cover != null}" th:src="${game.cover.url}" alt="Cover" width="60" height="80" class="rounded">
@@ -50,7 +50,8 @@
                         <div class="flex-grow-1">
                             <h5 class="mb-1" th:text="${game.name}">Game Title</h5>
                             <p class="mb-0 text-muted">
-                                <span th:text="${#dates.format(new java.util.Date(game.firstReleaseDate * 1000), 'yyyy')}">2023</span>
+                                <span th:if="${game.firstReleaseDate != null}" th:text="${#dates.format(new java.util.Date(game.firstReleaseDate * 1000), 'yyyy')}">2023</span>
+                                <span th:unless="${game.firstReleaseDate != null}">Año no disponible</span>
                                 <span th:if="${game.platforms != null}" class="ms-2 badge bg-light text-dark border">
                                     <span th:each="plat, iter : ${game.platforms}" th:text="${plat.name} + (${!iter.last} ? ', ' : '')">PS5</span>
                                 </span>
