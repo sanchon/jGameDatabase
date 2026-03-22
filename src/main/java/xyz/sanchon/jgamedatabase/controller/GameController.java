@@ -8,17 +8,29 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
+import xyz.sanchon.jgamedatabase.dto.GgDealsFetchResult;
+import xyz.sanchon.jgamedatabase.dto.GgDealsPriceEntry;
 import xyz.sanchon.jgamedatabase.dto.IgdbGame;
+import xyz.sanchon.jgamedatabase.dto.SteamSearchHitDto;
 import xyz.sanchon.jgamedatabase.model.Game;
 import xyz.sanchon.jgamedatabase.repository.GameRepository;
 import xyz.sanchon.jgamedatabase.repository.GenreRepository;
 import xyz.sanchon.jgamedatabase.repository.PlatformRepository;
 import xyz.sanchon.jgamedatabase.service.CsvService;
+import xyz.sanchon.jgamedatabase.service.GgDealsService;
 import xyz.sanchon.jgamedatabase.service.IgdbService;
+import xyz.sanchon.jgamedatabase.service.MarkdownService;
+import xyz.sanchon.jgamedatabase.service.SteamStoreSearchService;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/games")
@@ -28,14 +40,29 @@ public class GameController {
     private final PlatformRepository platformRepository;
     private final GenreRepository genreRepository;
     private final IgdbService igdbService;
+    private final GgDealsService ggDealsService;
+    private final SteamStoreSearchService steamStoreSearchService;
+    private final MarkdownService markdownService;
     private final CsvService csvService;
 
-    public GameController(GameRepository gameRepository, PlatformRepository platformRepository, GenreRepository genreRepository, IgdbService igdbService, CsvService csvService) {
+    public GameController(GameRepository gameRepository, PlatformRepository platformRepository, GenreRepository genreRepository, IgdbService igdbService, GgDealsService ggDealsService, SteamStoreSearchService steamStoreSearchService, MarkdownService markdownService, CsvService csvService) {
         this.gameRepository = gameRepository;
         this.platformRepository = platformRepository;
         this.genreRepository = genreRepository;
         this.igdbService = igdbService;
+        this.ggDealsService = ggDealsService;
+        this.steamStoreSearchService = steamStoreSearchService;
+        this.markdownService = markdownService;
         this.csvService = csvService;
+    }
+
+    /**
+     * Búsqueda en la tienda Steam (solo usada desde el formulario de deseados).
+     */
+    @GetMapping(value = "/api/steam-search", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<SteamSearchHitDto> steamSearch(@RequestParam("q") String q) {
+        return steamStoreSearchService.search(q);
     }
 
     @GetMapping
@@ -46,7 +73,8 @@ public class GameController {
                             @RequestParam(defaultValue = "asc") String sortDir,
                             Model model) {
         
-        Specification<Game> spec = Specification.where(null);
+        // Always filter by wishlist = false for the main list
+        Specification<Game> spec = Specification.where((root, query, cb) -> cb.equal(root.get("wishlist"), false));
         
         if (status != null && !status.isEmpty()) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
@@ -66,6 +94,7 @@ public class GameController {
 
         List<Game> games = gameRepository.findAll(spec, sort);
         model.addAttribute("games", games);
+        attachGgDealsPrices(model, games);
         model.addAttribute("genres", genreRepository.findAll());
         model.addAttribute("platforms", platformRepository.findAll());
         
@@ -78,6 +107,58 @@ public class GameController {
         model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
         
         return "games/list";
+    }
+
+    @GetMapping("/wishlist")
+    public String listWishlist(@RequestParam(defaultValue = "title") String sortBy,
+                               @RequestParam(defaultValue = "asc") String sortDir,
+                               @RequestParam(defaultValue = "false") boolean fetchPrices,
+                               Model model) {
+        
+        // Filter by wishlist = true
+        Specification<Game> spec = Specification.where((root, query, cb) -> cb.equal(root.get("wishlist"), true));
+        
+        org.springframework.data.domain.Sort sort = sortDir.equalsIgnoreCase("asc") ? 
+            org.springframework.data.domain.Sort.by(sortBy).ascending() : 
+            org.springframework.data.domain.Sort.by(sortBy).descending();
+
+        List<Game> games = gameRepository.findAll(spec, sort);
+        model.addAttribute("games", games);
+        if (fetchPrices) {
+            attachGgDealsPrices(model, games);
+        } else {
+            model.addAttribute("ggDealsPrices", Map.<Long, GgDealsPriceEntry>of());
+            model.addAttribute("ggDealsApiCalls", Collections.emptyList());
+            model.addAttribute("ggDealsSteamIdCount", 0);
+        }
+        model.addAttribute("fetchPrices", fetchPrices);
+        
+        model.addAttribute("sortBy", sortBy);
+        model.addAttribute("sortDir", sortDir);
+        model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
+        
+        return "games/wishlist";
+    }
+
+    @GetMapping("/detail/{id}")
+    public String gameDetail(@PathVariable Long id,
+                             @RequestParam(defaultValue = "false") boolean editNotes,
+                             Model model) {
+        Game game = gameRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        model.addAttribute("game", game);
+        model.addAttribute("editNotes", editNotes);
+        model.addAttribute("notesHtml", markdownService.toSafeHtml(game.getNotes()));
+        return "games/detail";
+    }
+
+    @PostMapping("/detail/{id}/notes")
+    public String updateGameNotes(@PathVariable Long id, @RequestParam(value = "notes", required = false) String notes) {
+        Game game = gameRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        game.setNotes(notes != null ? notes : "");
+        gameRepository.save(game);
+        return "redirect:/games/detail/" + id;
     }
 
     @GetMapping("/edit/{id}")
@@ -95,31 +176,38 @@ public class GameController {
 
         // Update fields available in the edit form
         existingGame.setStatus(game.getStatus());
+        existingGame.setRating(game.getRating());
         existingGame.setNotes(game.getNotes());
+        existingGame.setSteamAppId(game.getSteamAppId());
         
         // Save changes
         gameRepository.save(existingGame);
-        return "redirect:/games";
+        return existingGame.isWishlist() ? "redirect:/games/wishlist" : "redirect:/games";
     }
 
     @GetMapping("/delete/{id}")
     public String deleteGame(@PathVariable Long id) {
         Game game = gameRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Invalid game Id:" + id));
+        boolean isWishlist = game.isWishlist();
         gameRepository.delete(game);
-        return "redirect:/games";
+        return isWishlist ? "redirect:/games/wishlist" : "redirect:/games";
     }
 
     @GetMapping("/new")
-    public String searchForm() {
+    public String searchForm(@RequestParam(required = false, defaultValue = "false") boolean wishlist, Model model) {
+        model.addAttribute("wishlist", wishlist);
         return "games/search";
     }
 
     @GetMapping("/search")
-    public String searchGames(@RequestParam("query") String query, Model model) {
+    public String searchGames(@RequestParam("query") String query, 
+                              @RequestParam(required = false, defaultValue = "false") boolean wishlist,
+                              Model model) {
         List<IgdbGame> results = igdbService.searchGames(query);
         model.addAttribute("results", results);
         model.addAttribute("query", query);
+        model.addAttribute("wishlist", wishlist);
         return "games/search";
     }
 
@@ -128,6 +216,10 @@ public class GameController {
                              @RequestParam(value = "title", required = false) String title,
                              @RequestParam(value = "year", required = false) Integer year,
                              @RequestParam(value = "cover", required = false) String cover,
+                             @RequestParam(value = "slug", required = false) String slug,
+                             @RequestParam(value = "rating", required = false) Double rating,
+                             @RequestParam(value = "genre", required = false) String genreName,
+                             @RequestParam(value = "wishlist", required = false, defaultValue = "false") boolean wishlist,
                              Model model) {
         
         Game game = new Game();
@@ -135,18 +227,59 @@ public class GameController {
         game.setTitle(title);
         game.setReleaseYear(year);
         game.setCoverUrl(cover);
-        // Default status
-        game.setStatus("Backlog");
+        game.setIgdbSlug(slug);
+        game.setWishlist(wishlist);
+        
+        // Use rating as-is (0-100 scale) but round to 1 decimal
+        if (rating != null) {
+             game.setRating(Math.round(rating * 10.0) / 10.0);
+        }
+
+        if (genreName != null && !genreName.isEmpty()) {
+            xyz.sanchon.jgamedatabase.model.Genre genre = genreRepository.findByName(genreName)
+                    .orElseGet(() -> {
+                        xyz.sanchon.jgamedatabase.model.Genre newGenre = new xyz.sanchon.jgamedatabase.model.Genre();
+                        newGenre.setName(genreName);
+                        return genreRepository.save(newGenre);
+                    });
+            game.setGenre(genre);
+        }
+        
+        if (!wishlist) {
+            // Default status for possessed games
+            game.setStatus("Sin empezar");
+        } else {
+             game.setStatus(null); // Wishlist games don't need a status
+        }
+
+        // Steam App ID: en colección se intenta vía IGDB; en deseados no (poco fiable) — se usa búsqueda en Steam en el formulario.
+        if (igdbId != null && !wishlist) {
+            igdbService.findSteamAppIdForIgdbGame(igdbId).ifPresent(game::setSteamAppId);
+        }
         
         model.addAttribute("game", game);
         model.addAttribute("platforms", platformRepository.findAll());
         model.addAttribute("genres", genreRepository.findAll());
+        model.addAttribute("wishlist", wishlist);
         
         return "games/create";
     }
 
     @PostMapping("/create")
     public String createGame(@ModelAttribute("game") Game game) {
+        if (game.isWishlist()) {
+            game.setStatus(null); // Ensure no status for wishlist items
+        }
+        gameRepository.save(game);
+        return game.isWishlist() ? "redirect:/games/wishlist" : "redirect:/games";
+    }
+
+    @GetMapping("/move-to-collection/{id}")
+    public String moveToCollection(@PathVariable Long id) {
+        Game game = gameRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Invalid game Id:" + id));
+        game.setWishlist(false);
+        game.setStatus("Sin empezar");
         gameRepository.save(game);
         return "redirect:/games";
     }
@@ -172,5 +305,17 @@ public class GameController {
             return "redirect:/games?error=true";
         }
         return "redirect:/games";
+    }
+
+    private void attachGgDealsPrices(Model model, List<Game> games) {
+        List<Long> steamIds = games.stream()
+                .map(Game::getSteamAppId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        GgDealsFetchResult result = ggDealsService.fetchPricesBySteamAppIdsWithDebug(steamIds);
+        model.addAttribute("ggDealsPrices", result.getPrices());
+        model.addAttribute("ggDealsApiCalls", result.getApiCalls());
+        model.addAttribute("ggDealsSteamIdCount", steamIds.size());
     }
 }

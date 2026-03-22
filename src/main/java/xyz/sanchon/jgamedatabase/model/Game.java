@@ -26,9 +26,17 @@ public class Game {
     private String status;
     private Double rating;
     
-    @Column(length = 2000)
+    @Column(columnDefinition = "TEXT")
     private String notes;
     private String igdbSlug;
+
+    /** Steam App ID (para precios vía GG.deals). Opcional. */
+    private Long steamAppId;
+
+    // New field to differentiate between possessed and wishlist games
+    // true = wishlist, false/null = possessed
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean wishlist = false;
 
     public Game() {
     }
@@ -119,5 +127,38 @@ public class Game {
 
     public void setIgdbSlug(String igdbSlug) {
         this.igdbSlug = igdbSlug;
+    }
+
+    public Long getSteamAppId() {
+        return steamAppId;
+    }
+
+    public void setSteamAppId(Long steamAppId) {
+        this.steamAppId = steamAppId;
+    }
+
+    public boolean isWishlist() {
+        return wishlist;
+    }
+
+    public void setWishlist(boolean wishlist) {
+        this.wishlist = wishlist;
+    }
+
+    /**
+     * Genera un slug compatible con Metacritic siguiendo sus reglas:
+     * - Todo en minúsculas.
+     * - Signos de puntuación y espacios reemplazados por guiones.
+     * - Eliminación de caracteres especiales.
+     */
+    public String getMetacriticSlug() {
+        String base = (igdbSlug != null && !igdbSlug.isEmpty()) ? igdbSlug : title;
+        if (base == null) return "";
+
+        return base.toLowerCase()
+                .replaceAll("[^a-z0-9\\s]", "-") // Puntuación y especiales a guiones
+                .replaceAll("\\s+", "-")         // Espacios a guiones
+                .replaceAll("-+", "-")          // Colapsar guiones múltiples
+                .replaceAll("^-|-$", "");       // Quitar guiones al principio o final
     }
 }

@@ -11,12 +11,14 @@ public class Platform {
     private Long id;
 
     private String name;
+    private String metacriticSlug;
 
     public Platform() {
     }
 
-    public Platform(String name) {
+    public Platform(String name, String metacriticSlug) {
         this.name = name;
+        this.metacriticSlug = metacriticSlug;
     }
 
     public Long getId() {
@@ -33,5 +35,13 @@ public class Platform {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getMetacriticSlug() {
+        return metacriticSlug;
+    }
+
+    public void setMetacriticSlug(String metacriticSlug) {
+        this.metacriticSlug = metacriticSlug;
     }
 }

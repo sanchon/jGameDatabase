@@ -6,12 +6,21 @@ import org.springframework.web.reactive.function.client.WebClient;
 import xyz.sanchon.jgamedatabase.dto.IgdbAuthResponse;
 import xyz.sanchon.jgamedatabase.dto.IgdbGame;
 
+import xyz.sanchon.jgamedatabase.dto.IgdbExternalGame;
+import xyz.sanchon.jgamedatabase.dto.IgdbWebsite;
+
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class IgdbService {
+
+    private static final Pattern STEAM_STORE_APP_ID = Pattern.compile(
+            "store\\.steampowered\\.com/app/(\\d+)", Pattern.CASE_INSENSITIVE);
 
     private final WebClient webClient;
     
@@ -62,7 +71,7 @@ public class IgdbService {
         String token = getAccessToken();
 
         // IGDB Apicalypse query
-        String body = "fields name, cover.url, first_release_date, rating, slug, platforms.name;" +
+        String body = "fields name, cover.url, first_release_date, rating, slug, platforms.name, genres.name;" +
                       "search \"" + query + "\";" +
                       "limit 20;";
 
@@ -76,5 +85,83 @@ public class IgdbService {
                 .bodyToFlux(IgdbGame.class)
                 .collectList()
                 .block();
+    }
+
+    /**
+     * Obtiene el Steam App ID desde IGDB: primero {@code external_games} (Steam), si no, URL de tienda Steam en {@code websites}.
+     */
+    public Optional<Long> findSteamAppIdForIgdbGame(Long igdbGameId) {
+        if (igdbGameId == null) {
+            return Optional.empty();
+        }
+        Optional<Long> fromExternal = findSteamFromExternalGames(igdbGameId);
+        if (fromExternal.isPresent()) {
+            return fromExternal;
+        }
+        return findSteamAppIdFromWebsites(igdbGameId);
+    }
+
+    private Optional<Long> findSteamFromExternalGames(Long igdbGameId) {
+        String token = getAccessToken();
+        String body = "fields uid; where game = " + igdbGameId + " & category = 1; limit 5;";
+
+        List<IgdbExternalGame> rows = webClient.post()
+                .uri("https://api.igdb.com/v4/external_games")
+                .header("Client-ID", clientId)
+                .header("Authorization", "Bearer " + token)
+                .header("Content-Type", "text/plain")
+                .bodyValue(body)
+                .retrieve()
+                .bodyToFlux(IgdbExternalGame.class)
+                .collectList()
+                .block();
+
+        if (rows == null) {
+            return Optional.empty();
+        }
+        for (IgdbExternalGame row : rows) {
+            if (row.getUid() == null || row.getUid().isBlank()) {
+                continue;
+            }
+            try {
+                return Optional.of(Long.parseLong(row.getUid().trim()));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return Optional.empty();
+    }
+
+    /** Categoría website Steam en IGDB = 13. */
+    private Optional<Long> findSteamAppIdFromWebsites(Long igdbGameId) {
+        String token = getAccessToken();
+        String body = "fields url; where game = " + igdbGameId + " & category = 13; limit 10;";
+
+        List<IgdbWebsite> rows = webClient.post()
+                .uri("https://api.igdb.com/v4/websites")
+                .header("Client-ID", clientId)
+                .header("Authorization", "Bearer " + token)
+                .header("Content-Type", "text/plain")
+                .bodyValue(body)
+                .retrieve()
+                .bodyToFlux(IgdbWebsite.class)
+                .collectList()
+                .block();
+
+        if (rows == null) {
+            return Optional.empty();
+        }
+        for (IgdbWebsite row : rows) {
+            if (row.getUrl() == null || row.getUrl().isBlank()) {
+                continue;
+            }
+            Matcher m = STEAM_STORE_APP_ID.matcher(row.getUrl());
+            if (m.find()) {
+                try {
+                    return Optional.of(Long.parseLong(m.group(1)));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return Optional.empty();
     }
 }

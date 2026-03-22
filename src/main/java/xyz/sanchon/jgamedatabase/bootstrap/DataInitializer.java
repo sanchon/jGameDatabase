@@ -30,10 +30,10 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void loadData() {
-        Platform ps5 = new Platform("PlayStation 5");
-        Platform xbox = new Platform("Xbox Series X");
-        Platform switchPlat = new Platform("Nintendo Switch");
-        Platform pc = new Platform("PC");
+        Platform ps5 = new Platform("PlayStation 5", "playstation-5");
+        Platform xbox = new Platform("Xbox Series X", "xbox-series-x");
+        Platform switchPlat = new Platform("Nintendo Switch", "switch");
+        Platform pc = new Platform("PC", "pc");
 
         platformRepository.save(ps5);
         platformRepository.save(xbox);
@@ -81,6 +81,7 @@ public class DataInitializer implements CommandLineRunner {
         game3.setCoverUrl("https://placehold.co/300x400/34495e/ffffff.png?text=Hollow+Knight");
         gameRepository.save(game3);
 
-        System.out.println("Sample data loaded...");
+        System.out.println("Sample data loaded: 3 games added.");
+        System.out.println("Platforms initialized with Metacritic slugs: PS5, Xbox, Switch, PC.");
     }
 }

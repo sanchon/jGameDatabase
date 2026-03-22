@@ -124,6 +124,15 @@ public class CsvService {
                     }
                 }
 
+                String steamIdStr = getRecordValue(csvRecord, "steam_app_id");
+                if (steamIdStr != null && !steamIdStr.isEmpty()) {
+                    try {
+                        game.setSteamAppId(Long.parseLong(steamIdStr));
+                    } catch (NumberFormatException e) {
+                        game.setSteamAppId(null);
+                    }
+                }
+
                 game.setIgdbSlug(getRecordValue(csvRecord, "igdb_slug"));
                 game.setCoverUrl(getRecordValue(csvRecord, "portada_url"));
                 game.setNotes(getRecordValue(csvRecord, "notas"));
@@ -141,7 +150,7 @@ public class CsvService {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
              CSVPrinter csvPrinter = new CSVPrinter(new PrintWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8)), 
                      CSVFormat.DEFAULT.builder()
-                             .setHeader("id", "titulo", "año", "plataforma", "genero", "estado", "rating", "igdb_id", "igdb_slug", "portada_url", "notas")
+                             .setHeader("id", "titulo", "año", "plataforma", "genero", "estado", "rating", "igdb_id", "steam_app_id", "igdb_slug", "portada_url", "notas")
                              .build())) {
 
             for (Game game : games) {
@@ -154,6 +163,7 @@ public class CsvService {
                         game.getStatus(),
                         game.getRating(),
                         game.getIgdbId(),
+                        game.getSteamAppId(),
                         game.getIgdbSlug(),
                         game.getCoverUrl(),
                         game.getNotes()
