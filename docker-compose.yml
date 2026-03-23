@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    image: sanchon/jgamedatabase:latest
+    container_name: jgamedatabase
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/app/data
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - IGDB_CLIENT_ID=${IGDB_CLIENT_ID}
+      - IGDB_CLIENT_SECRET=${IGDB_CLIENT_SECRET}
+      - GGDEALS_API_KEY=${GGDEALS_API_KEY}
+      - GGDEALS_REGION=es
+    restart: unless-stopped
