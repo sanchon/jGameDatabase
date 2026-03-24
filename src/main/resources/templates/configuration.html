@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Configuration</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .help-block {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a class="navbar-brand" href="/">jGameDatabase</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="/">Home</a>
+            </li>
+            <li class="nav-item active">
+                <a class="nav-link" href="/configuration">Configuration <span class="sr-only">(current)</span></a>
+            </li>
+        </ul>
+    </div>
+</nav>
+
+<div class="container mt-5">
+    <h1 class="mb-4">Application Configuration</h1>
+
+    <div th:if="${message}" class="alert alert-success" role="alert">
+        <p th:text="${message}"></p>
+    </div>
+
+    <form th:action="@{/configuration}" method="post">
+        <div class="card mb-4">
+            <div class="card-header">
+                IGDB Configuration
+            </div>
+            <div class="card-body">
+                <p>To obtain these keys, you need to register an application on the <a href="https://api-docs.igdb.com/#account-creation" target="_blank">IGDB Developer Portal</a>.</p>
+                <div class="form-group">
+                    <label for="igdbClientId">IGDB Client ID:</label>
+                    <input type="text" class="form-control" id="igdbClientId" name="igdbClientId" th:value="${igdbClientId}">
+                </div>
+                <div class="form-group">
+                    <label for="igdbClientSecret">IGDB Client Secret:</label>
+                    <input type="password" class="form-control" id="igdbClientSecret" name="igdbClientSecret" th:value="${igdbClientSecret}">
+                    <small class="help-block">This value is secret. Keep it safe.</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                GG.deals Configuration
+            </div>
+            <div class="card-body">
+                <p>You can request an API key from <a href="https://gg.deals/api/" target="_blank">GG.deals API page</a>.</p>
+                <div class="form-group">
+                    <label for="ggDealsApiKey">GG.deals API Key:</label>
+                    <input type="text" class="form-control" id="ggDealsApiKey" name="ggDealsApiKey" th:value="${ggDealsApiKey}">
+                </div>
+                <div class="form-group">
+                    <label for="ggDealsRegion">GG.deals Region:</label>
+                    <select class="form-control" id="ggDealsRegion" name="ggDealsRegion">
+                        <option value="US" th:selected="${ggDealsRegion == 'US'}">United States</option>
+                        <option value="EU1" th:selected="${ggDealsRegion == 'EU1'}">Europe 1</option>
+                        <option value="EU2" th:selected="${ggDealsRegion == 'EU2'}">Europe 2</option>
+                        <option value="UK" th:selected="${ggDealsRegion == 'UK'}">United Kingdom</option>
+                        <option value="AU" th:selected="${ggDealsRegion == 'AU'}">Australia</option>
+                        <option value="BR" th:selected="${ggDealsRegion == 'BR'}">Brazil</option>
+                        <option value="CA" th:selected="${ggDealsRegion == 'CA'}">Canada</option>
+                        <!-- Add other regions as needed -->
+                         <option value="es" th:selected="${ggDealsRegion == 'es'}">Spain (ES)</option>
+                    </select>
+                     <small class="help-block">Select your preferred region for price tracking.</small>
+                </div>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Configuration</button>
+    </form>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
