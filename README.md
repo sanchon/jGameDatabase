@@ -8,15 +8,16 @@ Aplicación web para **gestionar tu colección personal de videojuegos** y una *
 
 | Área | Descripción |
 |------|-------------|
-| **Inicio** | Punto de entrada a la aplicación. |
+| **Inicio** | Punto de entrada a la aplicación con accesos directos a colección, deseados y añadir juego. |
 | **Mi colección** | Listado de juegos poseídos: filtros por estado, género y plataforma (se aplican al cambiar el desplegable), ordenación por título, año o nota, columnas de precio GG.deals cuando hay Steam App ID. |
 | **Deseados** | Lista de juegos deseados; búsqueda de precios en GG.deals bajo demanda. |
-| **Añadir juego** | Búsqueda en IGDB y formulario de alta; en deseados, búsqueda adicional en la **tienda Steam** para guardar el **Steam App ID** (necesario para precios). |
+| **Añadir juego** | Búsqueda en IGDB y formulario de alta. El desplegable de plataformas se rellena automáticamente con las plataformas que IGDB reporta para ese juego; si alguna no existe en la base de datos local, se crea al cargar el formulario. En deseados, búsqueda adicional en la **tienda Steam** para guardar el **Steam App ID** (necesario para precios). |
 | **Detalle** | Vista `/games/detail/{id}`: portada, metadatos, enlaces a IGDB / Steam / Metacritic; **notas en Markdown** con edición integrada y vista renderizada. |
 | **Editar** | Estado, valoración, notas, Steam App ID, etc. |
-| **CSV** | Exportar e importar la colección (desde la vista de colección). |
+| **Configuración** | Accesible desde la barra de navegación en todas las páginas (`/configuration`). Permite gestionar desde la UI las credenciales de **IGDB** (client ID y secret) y **GG.deals** (API key y región), como alternativa a `application-local.properties` o variables de entorno. Es la vía recomendada cuando se usa Docker. |
+| **CSV** | Exportar e importar **todos** los juegos (colección y deseados) desde la vista de colección. Los campos exportados/importados incluyen: `id`, `titulo`, `año`, `plataforma`, `genero`, `estado`, `rating`, `igdb_id`, `steam_app_id`, `igdb_slug`, `portada_url`, `notas` y `wishlist`. Al importar, las plataformas y géneros que no existan en la base de datos se crean automáticamente. |
 
-Las credenciales de APIs externas y el perfil local se describen en la sección [Configuración](#configuración).
+Las credenciales de APIs externas se pueden configurar mediante `application-local.properties`, variables de entorno, o directamente desde la UI en la página de [Configuración](#configuración).
 
 ---
 
@@ -29,6 +30,14 @@ Las credenciales de APIs externas y el perfil local se describen en la sección 
 ---
 
 ## Configuración
+
+### Credenciales de APIs externas
+
+Hay tres formas de configurar las credenciales, en orden de precedencia:
+
+1. **Página de Configuración** (`/configuration`): la propia aplicación permite introducirlas desde la UI y las persiste en la base de datos. Es la opción más cómoda, especialmente en Docker.
+2. **`application-local.properties`**: fichero ignorado por Git, recomendado para desarrollo local.
+3. **Variables de entorno**: útil para CI/CD o contenedores cuando no se quiere tocar ficheros.
 
 ### Perfil `local` y secretos
 
@@ -55,15 +64,38 @@ Puedes omitir `application-local.properties` y exportar:
 
 - `IGDB_CLIENT_ID`, `IGDB_CLIENT_SECRET`
 - `GGDEALS_API_KEY`
-- `GGDEALS_REGION` (opcional; por defecto suele usarse `es` en `application.properties`)
+- `GGDEALS_REGION` (opcional; por defecto `es` en `application.properties`)
 
 ### Base de datos
 
-La aplicación usa **H2 en modo archivo** en `./data/jgamedatabase` (ruta relativa al directorio de trabajo al arrancar). El directorio `data/` está ignorado en Git. La primera ejecución crea los ficheros.
+La aplicación usa **H2 en modo archivo** con acceso concurrente habilitado (`AUTO_SERVER=TRUE`). El fichero se almacena en `./data/jgamedatabase` (ruta relativa al directorio de trabajo al arrancar). El directorio `data/` está ignorado en Git. La primera ejecución crea los ficheros.
+
+Al arrancar, H2 levanta automáticamente un servidor TCP en el puerto **9092**, lo que permite conexiones simultáneas desde la propia aplicación y desde herramientas externas (por ejemplo, el plugin Database de IntelliJ).
+
+> **Datos de muestra**: si la base de datos está vacía al arrancar, la aplicación inserta automáticamente 3 juegos de ejemplo (Zelda: Breath of the Wild, Elden Ring, Hollow Knight) junto con 4 plataformas (PlayStation 5, Xbox Series X, Nintendo Switch, PC) y 4 géneros (RPG, Action, Adventure, Platformer).
 
 ### Consola H2
 
-Con la app en marcha, la consola H2 puede estar disponible según `application.properties` (`spring.h2.console.enabled=true`). La URL JDBC configurada es la del fichero anterior; usuario/contraseña por defecto en el proyecto: `sa` / `password` (solo entorno local).
+Con la app en marcha, accesible en **http://localhost:8080/h2-console**:
+
+| Campo | Valor |
+|-------|-------|
+| JDBC URL | `jdbc:h2:file:./data/jgamedatabase` |
+| Usuario | `sa` |
+| Contraseña | `password` |
+
+### Conexión desde IntelliJ Database plugin (u otro cliente externo)
+
+Con la aplicación corriendo, conéctate con estos parámetros:
+
+| Campo | Valor |
+|-------|-------|
+| Driver | H2 |
+| URL | `jdbc:h2:file:C:/Users/<tu_usuario>/IdeaProjects/jGameDatabase/data/jgamedatabase;AUTO_SERVER=TRUE` |
+| Usuario | `sa` |
+| Contraseña | `password` |
+
+> Usa la **ruta absoluta** al fichero para que IntelliJ la resuelva correctamente independientemente del directorio de trabajo. H2 detecta el servidor TCP ya activo y se conecta a través de él.
 
 ---
 
@@ -94,7 +126,7 @@ Crea `src/main/resources/application-local.properties` con tus claves (sección 
 gradlew.bat bootRun
 ```
 
-La aplicación suele quedar disponible en **http://localhost:8080** (puerto por defecto de Spring Boot si no se cambia).
+La aplicación queda disponible en **http://localhost:8080**.
 
 ### Compilar sin arrancar
 
@@ -118,6 +150,7 @@ java -jar build/libs/jGameDatabase-0.0.1-SNAPSHOT.jar
 
 - **Hot reload**: Spring DevTools está incluido como dependencia de desarrollo; recarga al cambiar código según configuración del IDE.
 - **Gradle JVM**: si el IDE falla al sincronizar Gradle, asigna explícitamente **JDK 21** como JVM de Gradle.
+- **Acceso concurrente a H2**: gracias a `AUTO_SERVER=TRUE`, la base de datos puede ser consultada simultáneamente por la aplicación y por herramientas externas (ver sección [Conexión desde IntelliJ](#conexión-desde-intellij-database-plugin-u-otro-cliente-externo)).
 
 ---
 

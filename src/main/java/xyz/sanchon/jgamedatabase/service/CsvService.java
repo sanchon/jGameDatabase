@@ -137,6 +137,11 @@ public class CsvService {
                 game.setCoverUrl(getRecordValue(csvRecord, "portada_url"));
                 game.setNotes(getRecordValue(csvRecord, "notas"));
 
+                String wishlistStr = getRecordValue(csvRecord, "wishlist");
+                if (wishlistStr != null && !wishlistStr.isEmpty()) {
+                    game.setWishlist(Boolean.parseBoolean(wishlistStr));
+                }
+
                 gamesToSave.add(game);
             }
 
@@ -150,7 +155,7 @@ public class CsvService {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
              CSVPrinter csvPrinter = new CSVPrinter(new PrintWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8)), 
                      CSVFormat.DEFAULT.builder()
-                             .setHeader("id", "titulo", "año", "plataforma", "genero", "estado", "rating", "igdb_id", "steam_app_id", "igdb_slug", "portada_url", "notas")
+                             .setHeader("id", "titulo", "año", "plataforma", "genero", "estado", "rating", "igdb_id", "steam_app_id", "igdb_slug", "portada_url", "notas", "wishlist")
                              .build())) {
 
             for (Game game : games) {
@@ -166,7 +171,8 @@ public class CsvService {
                         game.getSteamAppId(),
                         game.getIgdbSlug(),
                         game.getCoverUrl(),
-                        game.getNotes()
+                        game.getNotes(),
+                        game.isWishlist()
                 );
             }
 
