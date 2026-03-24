@@ -114,6 +114,7 @@
                                         slug=${game.slug},
                                         rating=${game.totalRating},
                                         genre=${(game.genres != null && !game.genres.isEmpty()) ? game.genres[0].name : null},
+                                        platforms=${game.platformNamesJoined},
                                         wishlist=${wishlist}
                                        )}"
                                        class="btn btn-outline-success btn-sm text-nowrap">

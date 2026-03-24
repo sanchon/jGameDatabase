@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class IgdbGame {
@@ -117,6 +118,14 @@ public class IgdbGame {
 
     public void setGenres(List<IgdbGenre> genres) {
         this.genres = genres;
+    }
+
+    // Helper para Thymeleaf: nombres de plataformas unidos por coma
+    public String getPlatformNamesJoined() {
+        if (platforms == null || platforms.isEmpty()) return null;
+        return platforms.stream()
+                .map(IgdbPlatform::getName)
+                .collect(Collectors.joining(","));
     }
 
     public Double getTotalRating() {

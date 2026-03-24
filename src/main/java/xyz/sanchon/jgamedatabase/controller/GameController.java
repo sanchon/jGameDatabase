@@ -26,6 +26,7 @@ import xyz.sanchon.jgamedatabase.service.IgdbService;
 import xyz.sanchon.jgamedatabase.service.MarkdownService;
 import xyz.sanchon.jgamedatabase.service.SteamStoreSearchService;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -219,6 +220,7 @@ public class GameController {
                              @RequestParam(value = "slug", required = false) String slug,
                              @RequestParam(value = "rating", required = false) Double rating,
                              @RequestParam(value = "genre", required = false) String genreName,
+                             @RequestParam(value = "platforms", required = false) String platformsParam,
                              @RequestParam(value = "wishlist", required = false, defaultValue = "false") boolean wishlist,
                              Model model) {
         
@@ -257,11 +259,29 @@ public class GameController {
             igdbService.findSteamAppIdForIgdbGame(igdbId).ifPresent(game::setSteamAppId);
         }
         
+        // Plataformas: usar las que vienen de IGDB (creándolas en BD si no existen),
+        // o todas las de BD como fallback si no hay info de IGDB.
+        List<xyz.sanchon.jgamedatabase.model.Platform> platforms;
+        if (platformsParam != null && !platformsParam.isBlank()) {
+            platforms = Arrays.stream(platformsParam.split(","))
+                    .map(String::trim)
+                    .filter(name -> !name.isEmpty())
+                    .map(name -> platformRepository.findByName(name)
+                            .orElseGet(() -> {
+                                xyz.sanchon.jgamedatabase.model.Platform p = new xyz.sanchon.jgamedatabase.model.Platform();
+                                p.setName(name);
+                                return platformRepository.save(p);
+                            }))
+                    .collect(Collectors.toList());
+        } else {
+            platforms = platformRepository.findAll();
+        }
+
         model.addAttribute("game", game);
-        model.addAttribute("platforms", platformRepository.findAll());
+        model.addAttribute("platforms", platforms);
         model.addAttribute("genres", genreRepository.findAll());
         model.addAttribute("wishlist", wishlist);
-        
+
         return "games/create";
     }
 
