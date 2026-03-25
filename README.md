@@ -68,9 +68,14 @@ Puedes omitir `application-local.properties` y exportar:
 
 ### Base de datos
 
-La aplicación usa **H2 en modo archivo** con acceso concurrente habilitado (`AUTO_SERVER=TRUE`). El fichero se almacena en `./data/jgamedatabase` (ruta relativa al directorio de trabajo al arrancar). El directorio `data/` está ignorado en Git. La primera ejecución crea los ficheros.
+La aplicación usa **H2 en modo archivo**. El fichero se almacena en rutas distintas según el entorno:
 
-Al arrancar, H2 levanta automáticamente un servidor TCP en el puerto **9092**, lo que permite conexiones simultáneas desde la propia aplicación y desde herramientas externas (por ejemplo, el plugin Database de IntelliJ).
+| Entorno | Perfil Spring | Ruta del fichero H2 |
+|---------|--------------|---------------------|
+| Local (Gradle / IntelliJ) | `local` | `./data/jgamedatabase` (relativo al directorio de trabajo) |
+| Docker | `prod` | `/app/data/jgamedatabase` (dentro del volumen del contenedor) |
+
+Cada entorno accede a su propio fichero independiente, sin conflictos de bloqueo entre la instancia local y la de Docker. El directorio `data/` está ignorado en Git. La primera ejecución crea los ficheros.
 
 > **Datos de muestra**: si la base de datos está vacía al arrancar, la aplicación inserta automáticamente 3 juegos de ejemplo (Zelda: Breath of the Wild, Elden Ring, Hollow Knight) junto con 4 plataformas (PlayStation 5, Xbox Series X, Nintendo Switch, PC) y 4 géneros (RPG, Action, Adventure, Platformer).
 
@@ -86,16 +91,18 @@ Con la app en marcha, accesible en **http://localhost:8080/h2-console**:
 
 ### Conexión desde IntelliJ Database plugin (u otro cliente externo)
 
-Con la aplicación corriendo, conéctate con estos parámetros:
+H2 en modo archivo solo admite una JVM a la vez. Para inspeccionar la base de datos tienes dos opciones:
+
+**Opción A — Con la app en marcha:** usa la consola web integrada en **http://localhost:8080/h2-console** (ver sección anterior).
+
+**Opción B — Con la app parada:** conéctate desde IntelliJ con ruta absoluta:
 
 | Campo | Valor |
 |-------|-------|
 | Driver | H2 |
-| URL | `jdbc:h2:file:C:/Users/<tu_usuario>/IdeaProjects/jGameDatabase/data/jgamedatabase;AUTO_SERVER=TRUE` |
+| URL | `jdbc:h2:file:C:/Users/<tu_usuario>/IdeaProjects/jGameDatabase/data/jgamedatabase` |
 | Usuario | `sa` |
 | Contraseña | `password` |
-
-> Usa la **ruta absoluta** al fichero para que IntelliJ la resuelva correctamente independientemente del directorio de trabajo. H2 detecta el servidor TCP ya activo y se conecta a través de él.
 
 ---
 
@@ -150,13 +157,19 @@ java -jar build/libs/jGameDatabase-0.0.1-SNAPSHOT.jar
 
 - **Hot reload**: Spring DevTools está incluido como dependencia de desarrollo; recarga al cambiar código según configuración del IDE.
 - **Gradle JVM**: si el IDE falla al sincronizar Gradle, asigna explícitamente **JDK 21** como JVM de Gradle.
-- **Acceso concurrente a H2**: gracias a `AUTO_SERVER=TRUE`, la base de datos puede ser consultada simultáneamente por la aplicación y por herramientas externas (ver sección [Conexión desde IntelliJ](#conexión-desde-intellij-database-plugin-u-otro-cliente-externo)).
+- **Inspección de H2**: mientras la app está corriendo usa la consola web (`/h2-console`); si la app está parada puedes abrir el fichero directamente desde IntelliJ (ver sección [Conexión desde IntelliJ](#conexión-desde-intellij-database-plugin-u-otro-cliente-externo)).
 
 ---
 
 ## Docker y Docker Hub
 
-El repositorio incluye un `Dockerfile` multi-etapa (JDK 21 → JRE, usuario no root, volumen para H2) y un `.dockerignore` para acelerar el contexto de build.
+Los ficheros Docker están en el directorio **`docker/`**:
+
+| Fichero | Descripción |
+|---------|-------------|
+| `docker/Dockerfile` | Build multi-etapa (JDK 21 → JRE, usuario no root, volumen para H2) |
+| `docker/docker-compose.yml` | Composición lista para producción |
+| `.dockerignore` | En el root (el contexto de build es siempre el root del proyecto) |
 
 ### Publicación automática con GitHub Actions
 
@@ -187,11 +200,33 @@ Si prefieres no usar CI:
 
 ```bash
 docker login
-docker build -t <tu_usuario>/jgamedatabase:latest .
+docker build -f docker/Dockerfile -t <tu_usuario>/jgamedatabase:latest .
 docker push <tu_usuario>/jgamedatabase:latest
 ```
 
-### Ejecutar el contenedor (servidor o local)
+### Ejecutar con Docker Compose (recomendado)
+
+El fichero `docker/docker-compose.yml` usa la imagen publicada en Docker Hub y monta el volumen de datos en `./data` (relativo al root del proyecto). Crea un fichero `.env` en el root con las credenciales:
+
+```env
+IGDB_CLIENT_ID=tu_client_id
+IGDB_CLIENT_SECRET=tu_client_secret
+GGDEALS_API_KEY=tu_api_key
+```
+
+Y luego:
+
+```bash
+docker compose -f docker/docker-compose.yml up -d
+```
+
+Para detenerlo:
+
+```bash
+docker compose -f docker/docker-compose.yml down
+```
+
+### Ejecutar el contenedor directamente (alternativa)
 
 Cualquier usuario con Docker instalado (o en tu servidor Linux de producción) puede ejecutar la aplicación siguiendo estos pasos:
 
