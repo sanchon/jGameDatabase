@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Configuration</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         .help-block {
             font-size: 0.8em;
@@ -27,6 +28,12 @@
                 <a class="nav-link" href="/configuration">Configuration <span class="sr-only">(current)</span></a>
             </li>
         </ul>
+        <form th:if="${portableMode}" action="/shutdown" method="post" class="d-flex ms-2"
+              onsubmit="return confirm('¿Detener jGameDatabase?')">
+            <button type="submit" class="btn btn-outline-danger btn-sm">
+                <i class="fas fa-power-off me-1"></i>Detener
+            </button>
+        </form>
     </div>
 </nav>
 

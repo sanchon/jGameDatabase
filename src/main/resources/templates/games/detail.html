@@ -55,6 +55,12 @@
                         <a class="nav-link" href="/configuration"><i class="fas fa-cog me-1"></i> Configuración</a>
                     </li>
                 </ul>
+                <form th:if="${portableMode}" action="/shutdown" method="post" class="d-flex ms-2"
+                      onsubmit="return confirm('¿Detener jGameDatabase?')">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-power-off me-1"></i>Detener
+                    </button>
+                </form>
             </div>
         </div>
     </nav>

@@ -75,6 +75,12 @@
                         <input type="file" name="file" class="form-control form-control-sm me-2" accept=".csv" required>
                         <button type="submit" class="btn btn-light btn-sm">Importar</button>
                     </form>
+                    <form th:if="${portableMode}" action="/shutdown" method="post" class="d-flex ms-2"
+                          onsubmit="return confirm('¿Detener jGameDatabase?')">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                            <i class="fas fa-power-off me-1"></i>Detener
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

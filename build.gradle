@@ -34,3 +34,45 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// Genera un ejecutable portable para la plataforma actual usando jpackage (incluido en JDK 14+).
+// Resultado en build/portable/
+tasks.register('packagePortable') {
+    dependsOn bootJar
+    group = 'distribution'
+    description = 'Genera ejecutable portable (app-image) para la plataforma actual con jpackage'
+
+    // jpackage no acepta sufijos como -SNAPSHOT: quedarse solo con major.minor.patch
+    def packageVersion = version.toString().replaceAll(/[-+].*$/, '')
+
+    doLast {
+        def jarFile  = bootJar.archiveFileName.get()
+        def inputDir = bootJar.destinationDirectory.get().asFile.absolutePath
+        def distDir  = layout.buildDirectory.dir('portable').get().asFile
+
+        project.delete(distDir)
+        distDir.mkdirs()
+
+        def cmd = [
+            'jpackage',
+            '--input',        inputDir,
+            '--name',         'jGameDatabase',
+            '--main-jar',     jarFile,
+            '--app-version',  packageVersion,
+            '--type',         'app-image',
+            '--dest',         distDir.absolutePath,
+            '--java-options', '-Dspring.profiles.active=portable',
+            '--java-options', '-Djava.awt.headless=false'
+        ]
+        // En Windows, abrir ventana de consola para mostrar los logs y el mensaje de arranque
+        if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+            cmd += ['--win-console']
+        }
+
+        exec {
+            commandLine cmd
+        }
+
+        println "\n✔ Ejecutable portable generado en: ${distDir.absolutePath}"
+    }
+}

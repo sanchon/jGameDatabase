@@ -4,6 +4,78 @@ Aplicación web para **gestionar tu colección personal de videojuegos** y una *
 
 ---
 
+## Opciones de instalación
+
+Elige la que mejor se adapte a tu caso:
+
+| Opción | Requiere | Ideal para |
+|--------|----------|------------|
+| [Ejecutable portable](#1-ejecutable-portable-recomendado-para-usuarios-finales) | Nada | Usar en tu PC sin instalar nada |
+| [Docker](#2-docker) | Docker | Servidores o quienes ya usen contenedores |
+| [Desde el código fuente](#3-desde-el-código-fuente-para-desarrolladores) | JDK 21 + Git | Desarrollo y personalización |
+
+### 1. Ejecutable portable (recomendado para usuarios finales)
+
+Descarga el ZIP para tu sistema desde la página de [Releases](../../releases/latest), descomprímelo y ejecuta:
+
+| Sistema | Ejecutable |
+|---------|-----------|
+| Windows | `jGameDatabase\jGameDatabase.exe` |
+| Linux   | `jGameDatabase/bin/jGameDatabase` |
+| macOS   | `jGameDatabase.app` (doble clic) |
+
+**No es necesario tener Java instalado.** La JRE va incluida en el ZIP.
+
+Los datos se guardan en `~/.jgamedatabase/data/` (carpeta de usuario).
+Tras arrancar, abre **http://localhost:8080** en tu navegador.
+
+### 2. Docker
+
+La forma más cómoda si ya tienes Docker. No necesitas clonar el repositorio.
+
+**Con Docker Compose** (recomendado): crea un fichero `.env` con tus credenciales y ejecuta:
+
+```env
+IGDB_CLIENT_ID=tu_client_id
+IGDB_CLIENT_SECRET=tu_client_secret
+GGDEALS_API_KEY=tu_api_key
+```
+
+```bash
+docker compose -f docker/docker-compose.yml up -d
+```
+
+**O directamente con `docker run`:**
+
+```bash
+docker run -d \
+  --name jgamedatabase \
+  -p 8080:8080 \
+  -v jgamedatabase-data:/app/data \
+  -e IGDB_CLIENT_ID="tu_client_id" \
+  -e IGDB_CLIENT_SECRET="tu_client_secret" \
+  -e GGDEALS_API_KEY="tu_api_key" \
+  --restart unless-stopped \
+  <tu_usuario_docker>/jgamedatabase:latest
+```
+
+Disponible en **http://localhost:8080**. Las credenciales también se pueden introducir desde la UI en `/configuration` tras el primer arranque.
+
+### 3. Desde el código fuente (para desarrolladores)
+
+Requiere **JDK 21** y **Git**.
+
+```bash
+git clone <url-del-repositorio>
+cd jGameDatabase
+./gradlew bootRun          # Linux / macOS
+gradlew.bat bootRun        # Windows
+```
+
+Disponible en **http://localhost:8080**. Consulta la sección [Configuración](#configuración) para añadir las credenciales de API.
+
+---
+
 ## Funcionalidades
 
 | Área | Descripción |
