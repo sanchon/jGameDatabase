@@ -52,7 +52,7 @@ jobs:
           ./gradlew bootJar -Pversion=${{ steps.version.outputs.version }} --no-daemon
 
       - name: Renombrar JAR a nombre fijo
-        run: cp build/libs/jgamedatabase-${{ steps.version.outputs.version }}.jar build/libs/jGameDatabase.jar
+        run: cp build/libs/jGameDatabase-*.jar build/libs/jGameDatabase.jar
 
       - uses: actions/upload-artifact@v4
         with:
