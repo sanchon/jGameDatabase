@@ -47,7 +47,9 @@ jobs:
           echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Build bootJar
-        run: ./gradlew bootJar -Pversion=${{ steps.version.outputs.version }} --no-daemon
+        run: |
+          chmod +x gradlew
+          ./gradlew bootJar -Pversion=${{ steps.version.outputs.version }} --no-daemon
 
       - name: Renombrar JAR a nombre fijo
         run: cp build/libs/jgamedatabase-${{ steps.version.outputs.version }}.jar build/libs/jGameDatabase.jar
