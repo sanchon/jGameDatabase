@@ -1,0 +1,181 @@
+# Construye ejecutables portables para Windows, Linux y macOS usando jpackage.
+# Crea una GitHub Release con los ZIPs y el JAR al publicar un tag v*.
+#
+# Uso:
+#   git tag v1.0.0 && git push origin v1.0.0
+#
+# También puede lanzarse manualmente desde Actions → Release → Run workflow.
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versión sin "v" (ej: 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  # ── 1. Compilar el fat JAR una sola vez ──────────────────────────────────────
+  build-jar:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Determinar versión
+        id: version
+        run: |
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${{ inputs.version }}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Build bootJar
+        run: ./gradlew bootJar -Pversion=${{ steps.version.outputs.version }} --no-daemon
+
+      - name: Renombrar JAR a nombre fijo
+        run: cp build/libs/jgamedatabase-${{ steps.version.outputs.version }}.jar build/libs/jGameDatabase.jar
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: build/libs/jGameDatabase.jar
+
+  # ── 2. Empaquetar en cada plataforma ─────────────────────────────────────────
+  package:
+    needs: build-jar
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: windows-latest
+            platform: windows
+          - os: macos-latest
+            platform: macos
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: input/
+
+      - name: Crear imagen portable con jpackage (Linux / macOS)
+        if: matrix.platform != 'windows'
+        run: |
+          jpackage \
+            --input input \
+            --name jGameDatabase \
+            --main-jar jGameDatabase.jar \
+            --app-version "${{ needs.build-jar.outputs.version }}" \
+            --type app-image \
+            --dest dist \
+            --java-options "-Dspring.profiles.active=portable" \
+            --java-options "-Djava.awt.headless=false"
+
+      - name: Crear imagen portable con jpackage (Windows)
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          jpackage \
+            --input input \
+            --name jGameDatabase \
+            --main-jar jGameDatabase.jar \
+            --app-version "${{ needs.build-jar.outputs.version }}" \
+            --type app-image \
+            --dest dist \
+            --java-options "-Dspring.profiles.active=portable" \
+            --java-options "-Djava.awt.headless=false" \
+            --win-console
+
+      - name: Comprimir imagen (Linux / macOS)
+        if: matrix.platform != 'windows'
+        run: |
+          cd dist
+          zip -r ../jGameDatabase-${{ matrix.platform }}.zip jGameDatabase*/
+
+      - name: Comprimir imagen (Windows)
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path dist\jGameDatabase -DestinationPath jGameDatabase-windows.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-${{ matrix.platform }}
+          path: jGameDatabase-${{ matrix.platform }}.zip
+
+  # ── 3. Publicar GitHub Release ───────────────────────────────────────────────
+  release:
+    needs: [build-jar, package]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: package-*
+          merge-multiple: true
+          path: dist/
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: dist/
+
+      - name: Publicar Release en GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          name: jGameDatabase v${{ needs.build-jar.outputs.version }}
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', inputs.version) }}
+          body: |
+            ## Instalación
+
+            Descarga el ZIP para tu sistema operativo, descomprímelo y ejecuta la aplicación.
+            **No se necesita tener Java instalado.**
+
+            | Sistema operativo | Archivo | Ejecutable |
+            |-------------------|---------|------------|
+            | Windows | `jGameDatabase-windows.zip` | `jGameDatabase\jGameDatabase.exe` |
+            | Linux   | `jGameDatabase-linux.zip`   | `jGameDatabase/bin/jGameDatabase` |
+            | macOS   | `jGameDatabase-macos.zip`   | `jGameDatabase.app` (doble clic) |
+
+            ### Requisito: abrir el navegador manualmente
+            Tras arrancar, abre **http://localhost:8080** en tu navegador.
+
+            ### Dónde se guardan los datos
+            Los datos de la base de datos se almacenan en `~/.jgamedatabase/data/`.
+
+            ---
+
+            ### Alternativa: solo JAR (requiere Java 21+)
+            ```bash
+            java -Dspring.profiles.active=portable -jar jGameDatabase.jar
+            ```
+          files: dist/*
+          generate_release_notes: true
