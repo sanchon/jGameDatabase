@@ -54,6 +54,7 @@ public class StatusMigrationService implements CommandLineRunner {
         if (migrated > 0) {
             System.out.println("[StatusMigration] " + migrated + " juego(s) migrados al nuevo sistema de estados.");
         }
+        clearLegacyStatusField();
     }
 
     private void seedCanonicalStatuses() {
@@ -85,9 +86,18 @@ public class StatusMigrationService implements CommandLineRunner {
             );
             GameStatus gs = statusRepository.findByName(canonical)
                     .orElseGet(() -> statusRepository.findByName("Sin empezar").orElseThrow());
-            jdbc.update("UPDATE games SET status_id = ? WHERE id = ?", gs.getId(), gameId);
+            jdbc.update("UPDATE games SET status_id = ?, status = NULL WHERE id = ?", gs.getId(), gameId);
             count++;
         }
         return count;
+    }
+
+    /** Pone a NULL el campo legacy en todos los juegos que ya tienen status_id asignado. */
+    private void clearLegacyStatusField() {
+        try {
+            jdbc.update("UPDATE games SET status = NULL WHERE status_id IS NOT NULL AND status IS NOT NULL");
+        } catch (Exception ignored) {
+            // Si la columna status no existe en este esquema simplemente se ignora
+        }
     }
 }

@@ -177,7 +177,7 @@ public class CsvService {
                         game.getReleaseYear(),
                         game.getPlatform() != null ? game.getPlatform().getName() : "",
                         game.getGenre() != null ? game.getGenre().getName() : "",
-                        game.getStatus(),
+                        game.getGameStatus() != null ? game.getGameStatus().getName() : "",
                         game.getRating(),
                         game.getIgdbId(),
                         game.getSteamAppId(),
