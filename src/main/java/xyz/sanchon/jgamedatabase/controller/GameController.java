@@ -92,7 +92,8 @@ public class GameController {
         Specification<Game> spec = Specification.where((root, query, cb) -> cb.equal(root.get("wishlist"), false));
         
         if (status != null && !status.isEmpty()) {
-            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+            spec = spec.and((root, query, cb) ->
+                    cb.equal(root.get("gameStatus").get("name"), status));
         }
         
         if (genreId != null) {
