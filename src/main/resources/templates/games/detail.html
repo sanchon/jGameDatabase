@@ -82,19 +82,8 @@
                         </div>
 
                         <dl class="row small mb-0">
-                            <dt class="col-sm-3 col-lg-2 text-muted" th:if="${game.igdbId != null}">IGDB</dt>
-                            <dd class="col-sm-9 col-lg-10" th:if="${game.igdbId != null}">
-                                <span th:text="${game.igdbId}">123</span>
-                                <a th:if="${game.igdbSlug != null}"
-                                   th:href="@{'https://www.igdb.com/games/' + ${game.igdbSlug}}"
-                                   target="_blank" rel="noopener" class="ms-2">Ver en IGDB <i class="fas fa-external-link-alt fa-xs"></i></a>
-                            </dd>
-                            <dt class="col-sm-3 col-lg-2 text-muted" th:if="${game.steamAppId != null}">Steam</dt>
-                            <dd class="col-sm-9 col-lg-10" th:if="${game.steamAppId != null}">
-                                <span th:text="${game.steamAppId}">730</span>
-                                <a th:href="@{'https://store.steampowered.com/app/' + ${game.steamAppId}}"
-                                   target="_blank" rel="noopener" class="ms-2">Tienda Steam <i class="fas fa-external-link-alt fa-xs"></i></a>
-                            </dd>
+                            <dt class="col-sm-3 col-lg-2 text-muted" th:if="${game.steamAppId != null}">Steam App ID</dt>
+                            <dd class="col-sm-9 col-lg-10" th:if="${game.steamAppId != null}" th:text="${game.steamAppId}">730</dd>
                         </dl>
 
                         <div class="mt-4">
@@ -125,17 +114,41 @@
                             </div>
                         </div>
 
-                        <div class="mt-4 d-flex flex-wrap gap-2">
-                            <a th:href="@{/games/edit/{id}(id=${game.id})}" class="btn btn-primary">
-                                <i class="fas fa-edit me-1"></i>Editar
+                        <form th:if="${!game.wishlist}" th:action="@{/games/detail/{id}/status(id=${game.id})}" method="post"
+                              class="d-flex align-items-center gap-2 mt-4">
+                            <label class="form-label mb-0 text-muted small fw-semibold">Estado:</label>
+                            <select name="status" class="form-select form-select-sm" style="width: auto;"
+                                    onchange="this.form.submit()">
+                                <option value="Sin empezar" th:selected="${game.status == 'Sin empezar'}">Sin empezar</option>
+                                <option value="Jugando"     th:selected="${game.status == 'Jugando'}">Jugando</option>
+                                <option value="Terminado"   th:selected="${game.status == 'Terminado'}">Terminado</option>
+                                <option value="Abandonado"  th:selected="${game.status == 'Abandonado'}">Abandonado</option>
+                            </select>
+                        </form>
+
+                        <div class="mt-3 d-flex flex-wrap gap-2">
+                            <a th:if="${game.wishlist}" th:href="@{/games/wishlist}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Volver
                             </a>
-                            <a th:if="${game.wishlist}" th:href="@{/games/wishlist}" class="btn btn-outline-secondary">Volver</a>
-                            <a th:unless="${game.wishlist}" th:href="@{/games}" class="btn btn-outline-secondary">Volver</a>
+                            <a th:unless="${game.wishlist}" th:href="@{/games}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>Volver
+                            </a>
+                            <a th:if="${game.igdbSlug != null}"
+                               th:href="@{'https://www.igdb.com/games/' + ${game.igdbSlug}}"
+                               target="_blank" rel="noopener" class="btn btn-outline-secondary">
+                                <i class="fas fa-external-link-alt me-1"></i>IGDB
+                            </a>
                             <a th:if="${game.igdbSlug != null}"
                                th:href="@{'https://www.metacritic.com/game/' + ${game.metacriticSlug}}"
-                               target="_blank" rel="noopener" class="btn btn-dark">
-                                <span class="badge bg-success me-1">M</span> Metacritic
+                               target="_blank" rel="noopener" class="btn btn-outline-secondary">
+                                <i class="fas fa-external-link-alt me-1"></i>Metacritic
                             </a>
+                            <form th:action="@{/games/delete/{id}(id=${game.id})}" method="post" class="d-inline">
+                                <button type="submit" class="btn btn-outline-danger"
+                                        onclick="return confirm('¿Seguro que deseas eliminar «' + /*[[${game.title}]]*/ '' + '»?')">
+                                    <i class="fas fa-trash-alt me-1"></i>Eliminar
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

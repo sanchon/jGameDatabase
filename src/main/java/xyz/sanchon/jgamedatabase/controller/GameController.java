@@ -162,34 +162,19 @@ public class GameController {
         return "redirect:/games/detail/" + id;
     }
 
-    @GetMapping("/edit/{id}")
-    public String showEditForm(@PathVariable Long id, Model model) {
+    @PostMapping("/detail/{id}/status")
+    public String updateStatus(@PathVariable Long id, @RequestParam String status) {
         Game game = gameRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid game Id:" + id));
-        model.addAttribute("game", game);
-        return "games/edit";
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        game.setStatus(status);
+        gameRepository.save(game);
+        return "redirect:/games/detail/" + id;
     }
 
-    @PostMapping("/update/{id}")
-    public String updateGame(@PathVariable Long id, @ModelAttribute("game") Game game) {
-        Game existingGame = gameRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid game Id:" + id));
-
-        // Update fields available in the edit form
-        existingGame.setStatus(game.getStatus());
-        existingGame.setRating(game.getRating());
-        existingGame.setNotes(game.getNotes());
-        existingGame.setSteamAppId(game.getSteamAppId());
-        
-        // Save changes
-        gameRepository.save(existingGame);
-        return existingGame.isWishlist() ? "redirect:/games/wishlist" : "redirect:/games";
-    }
-
-    @GetMapping("/delete/{id}")
+    @PostMapping("/delete/{id}")
     public String deleteGame(@PathVariable Long id) {
         Game game = gameRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Invalid game Id:" + id));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         boolean isWishlist = game.isWishlist();
         gameRepository.delete(game);
         return isWishlist ? "redirect:/games/wishlist" : "redirect:/games";

@@ -171,8 +171,6 @@
                                    th:class="${sortDir == 'asc' ? 'fas fa-sort-up ms-1' : 'fas fa-sort-down ms-1'}"></i>
                             </a>
                         </th>
-                        <th>Precio</th>
-                        <th class="text-end">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -187,7 +185,7 @@
                             </div>
                         </td>
                         <td>
-                            <a th:href="@{/games/detail/{id}(id=${game.id})}" class="fw-bold text-primary text-decoration-none" th:text="${game.title}">Super Mario World</a>
+                            <a th:href="@{/games/detail/{id}(id=${game.id})}" class="fw-bold text-decoration-underline" th:text="${game.title}">Super Mario World</a>
                         </td>
                         <td>
                             <span class="badge bg-secondary" th:if="${game.platform != null}" th:text="${game.platform.name}">SNES</span>
@@ -207,48 +205,9 @@
                                 <span th:text="${game.rating}">9.5</span>
                             </div>
                         </td>
-                        <td class="small">
-                            <th:block th:if="${game.steamAppId != null && ggDealsPrices != null && ggDealsPrices.containsKey(game.steamAppId)}"
-                                      th:with="entry=${ggDealsPrices.get(game.steamAppId)}">
-                                <div th:if="${entry != null && entry.prices != null}" th:with="p=${entry.prices}">
-                                    <div class="mb-1" th:if="${p.currency != null}">
-                                        <span class="badge bg-secondary" th:text="${p.currency}">EUR</span>
-                                    </div>
-                                    <div class="lh-sm"><span class="text-muted">Tienda act.</span> <span class="fw-semibold" th:text="${p.currentRetail != null ? p.currentRetail : '—'}">—</span></div>
-                                    <div class="lh-sm"><span class="text-muted">Keys act.</span> <span class="fw-semibold" th:text="${p.currentKeyshops != null ? p.currentKeyshops : '—'}">—</span></div>
-                                    <div class="lh-sm"><span class="text-muted">Tienda hist.</span> <span th:text="${p.historicalRetail != null ? p.historicalRetail : '—'}">—</span></div>
-                                    <div class="lh-sm"><span class="text-muted">Keys hist.</span> <span th:text="${p.historicalKeyshops != null ? p.historicalKeyshops : '—'}">—</span></div>
-                                    <a th:if="${entry.url != null}" th:href="${entry.url}" target="_blank" rel="noopener" class="link-secondary small d-inline-block mt-1">GG.deals</a>
-                                </div>
-                            </th:block>
-                            <span th:if="${game.steamAppId == null}" class="text-muted">—</span>
-                            <span th:if="${game.steamAppId != null && (ggDealsPrices == null || !ggDealsPrices.containsKey(game.steamAppId))}"
-                                  class="text-muted" title="Sin oferta en GG.deals para este ID">n/d</span>
-                        </td>
-                        <td class="text-end">
-                            <div class="btn-group btn-group-sm">
-                                <a th:href="@{/games/detail/{id}(id=${game.id})}" class="btn btn-outline-info" title="Detalles">
-                                    <i class="fas fa-circle-info"></i>
-                                </a>
-                                <a th:if="${game.igdbSlug != null}"
-                                   th:href="@{'https://www.metacritic.com/game/' + ${game.metacriticSlug}}"
-                                   target="_blank" class="btn btn-dark" title="Metacritic">
-                                    <span class="badge bg-success">M</span>
-                                </a>
-                                <a th:href="@{/games/edit/{id}(id=${game.id})}" class="btn btn-outline-primary" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <a th:href="@{/games/delete/{id}(id=${game.id})}"
-                                   class="btn btn-outline-danger"
-                                   onclick="return confirm('¿Seguro que deseas eliminar este juego?')"
-                                   title="Eliminar">
-                                    <i class="fas fa-trash-alt"></i>
-                                </a>
-                            </div>
-                        </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(games)}">
-                        <td colspan="10" class="text-center py-4 text-muted">
+                        <td colspan="8" class="text-center py-4 text-muted">
                             <i class="fas fa-ghost fa-2x mb-2"></i>
                             <p class="mb-0">No se encontraron juegos con los filtros actuales.</p>
                         </td>
