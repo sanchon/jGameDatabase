@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import xyz.sanchon.jgamedatabase.model.Genre;
+import xyz.sanchon.jgamedatabase.model.Platform;
 import xyz.sanchon.jgamedatabase.repository.GameRepository;
 import xyz.sanchon.jgamedatabase.repository.GenreRepository;
 import xyz.sanchon.jgamedatabase.repository.PlatformRepository;
@@ -41,6 +43,7 @@ public class ConfigurationController {
         model.addAttribute("igdbClientSecret", configService.getIgdbClientSecret());
         model.addAttribute("ggDealsApiKey", configService.getGgDealsApiKey());
         model.addAttribute("ggDealsRegion", configService.getGgDealsRegion());
+        model.addAttribute("h2ConsoleEnabled", configService.isH2ConsoleEnabled());
         return "configuration";
     }
 
@@ -62,8 +65,31 @@ public class ConfigurationController {
         model.addAttribute("igdbClientSecret", igdbClientSecret);
         model.addAttribute("ggDealsApiKey", ggDealsApiKey);
         model.addAttribute("ggDealsRegion", ggDealsRegion);
+        model.addAttribute("h2ConsoleEnabled", configService.isH2ConsoleEnabled());
 
         return "configuration";
+    }
+
+    @PostMapping("/h2-console/toggle")
+    public String toggleH2Console(RedirectAttributes redirectAttributes) {
+        boolean current = configService.isH2ConsoleEnabled();
+        configService.setH2ConsoleEnabled(!current);
+        redirectAttributes.addFlashAttribute("message",
+                "Consola H2 " + (!current ? "activada" : "desactivada") + " correctamente.");
+        return "redirect:/configuration";
+    }
+
+    @PostMapping("/cleanup")
+    public String cleanupOrphans(RedirectAttributes redirectAttributes) {
+        List<Platform> unusedPlatforms = platformRepository.findUnused();
+        List<Genre> unusedGenres = genreRepository.findUnused();
+        platformRepository.deleteAll(unusedPlatforms);
+        genreRepository.deleteAll(unusedGenres);
+
+        redirectAttributes.addFlashAttribute("message",
+                "Limpieza completada: " + unusedPlatforms.size() + " plataforma(s) y " +
+                unusedGenres.size() + " género(s) sin juegos eliminados.");
+        return "redirect:/configuration";
     }
 
     @PostMapping("/reset")

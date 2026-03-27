@@ -56,7 +56,7 @@ docker run -d \
   -e IGDB_CLIENT_SECRET="tu_client_secret" \
   -e GGDEALS_API_KEY="tu_api_key" \
   --restart unless-stopped \
-  <tu_usuario_docker>/jgamedatabase:latest
+  sanchon/jgamedatabase:latest
 ```
 
 Disponible en **http://localhost:8080**. Las credenciales también se pueden introducir desde la UI en `/configuration` tras el primer arranque.
@@ -86,7 +86,7 @@ Disponible en **http://localhost:8080**. Consulta la sección [Configuración](#
 | **Añadir juego** | Búsqueda en IGDB y formulario de alta. El desplegable de plataformas se rellena automáticamente con las plataformas que IGDB reporta para ese juego; si alguna no existe en la base de datos local, se crea al cargar el formulario. En deseados, búsqueda adicional en la **tienda Steam** para guardar el **Steam App ID** (necesario para precios). |
 | **Detalle** | Vista `/games/detail/{id}`: portada, metadatos, enlaces a IGDB / Steam / Metacritic; **notas en Markdown** con edición integrada y vista renderizada. |
 | **Editar** | Estado, valoración, notas, Steam App ID, etc. |
-| **Configuración** | Accesible desde la barra de navegación en todas las páginas (`/configuration`). Permite gestionar desde la UI las credenciales de **IGDB** (client ID y secret) y **GG.deals** (API key y región), como alternativa a `application-local.properties` o variables de entorno. Es la vía recomendada cuando se usa Docker. |
+| **Configuración** | Accesible desde la barra de navegación en todas las páginas (`/configuration`). Permite gestionar desde la UI las credenciales de **IGDB** (client ID y secret) y **GG.deals** (API key y región), como alternativa a `application-local.properties` o variables de entorno. Es la vía recomendada cuando se usa Docker. Incluye también una opción para **reiniciar la base de datos** (elimina todos los juegos, géneros y plataformas excepto PC, Xbox 360 y Nintendo Switch). |
 | **CSV** | Exportar e importar **todos** los juegos (colección y deseados) desde la vista de colección. Los campos exportados/importados incluyen: `id`, `titulo`, `año`, `plataforma`, `genero`, `estado`, `rating`, `igdb_id`, `steam_app_id`, `igdb_slug`, `portada_url`, `notas` y `wishlist`. Al importar, las plataformas y géneros que no existan en la base de datos se crean automáticamente. |
 
 Las credenciales de APIs externas se pueden configurar mediante `application-local.properties`, variables de entorno, o directamente desde la UI en la página de [Configuración](#configuración).
@@ -218,7 +218,7 @@ El JAR ejecutable queda en `build/libs/` (nombre con versión del proyecto).
 ### Ejecutar el JAR
 
 ```bash
-java -jar build/libs/jGameDatabase-0.0.1-SNAPSHOT.jar
+java -jar build/libs/jGameDatabase-1.1.3.jar
 ```
 
 (Ajusta el nombre del fichero si la versión cambia.)
@@ -247,7 +247,6 @@ Los ficheros Docker están en el directorio **`docker/`**:
 
 El workflow [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) construye la imagen y la sube a **Docker Hub** cuando:
 
-- se hace **push** a las ramas `main` o `master`, o
 - se publica un **tag** semántico `v*` (p. ej. `v1.2.0`), o
 - se lanza manualmente desde la pestaña **Actions** → **Publish Docker image** → **Run workflow**.
 

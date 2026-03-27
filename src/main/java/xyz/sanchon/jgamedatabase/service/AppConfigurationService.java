@@ -13,6 +13,7 @@ public class AppConfigurationService {
     public static final String IGDB_CLIENT_SECRET = "igdb.client-secret";
     public static final String GGDEALS_API_KEY = "ggdeals.api-key";
     public static final String GGDEALS_REGION = "ggdeals.region";
+    public static final String H2_CONSOLE_ENABLED = "h2.console.enabled";
 
     @Value("${igdb.client-id:#{null}}")
     private String igdbClientIdProp;
@@ -78,6 +79,14 @@ public class AppConfigurationService {
     
     public void setGgDealsRegion(String value) {
         setValue(GGDEALS_REGION, value);
+    }
+
+    public boolean isH2ConsoleEnabled() {
+        return "true".equals(getValue(H2_CONSOLE_ENABLED));
+    }
+
+    public void setH2ConsoleEnabled(boolean enabled) {
+        setValue(H2_CONSOLE_ENABLED, String.valueOf(enabled));
     }
 
     private String getValue(String key) {
