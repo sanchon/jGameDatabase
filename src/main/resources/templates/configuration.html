@@ -19,9 +19,8 @@
 <div class="container mt-5">
     <h1 class="mb-4">Application Configuration</h1>
 
-    <div th:if="${message}" class="alert alert-success" role="alert">
-        <p th:text="${message}"></p>
-    </div>
+    <div th:if="${message}" class="alert alert-success" role="alert" th:text="${message}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}"></div>
 
     <form th:action="@{/configuration}" method="post">
         <div class="card mb-4">
@@ -74,6 +73,42 @@
     </form>
 
     <div class="card mt-5 mb-4">
+        <div class="card-header">
+            <i class="fas fa-box-archive me-2"></i> Copias de seguridad
+        </div>
+        <div class="card-body">
+            <p class="card-text">
+                Guarda una copia de todos los juegos en formato CSV en el servidor.
+                Directorio: <code th:text="${backupDir}"></code>
+            </p>
+            <form th:action="@{/configuration/backup}" method="post" class="mb-3">
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="fas fa-floppy-disk me-1"></i> Hacer copia de seguridad ahora
+                </button>
+            </form>
+            <div th:if="${!backups.isEmpty()}">
+                <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Archivo</th>
+                            <th>Fecha</th>
+                            <th class="text-end">Tamaño</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="b : ${backups}">
+                            <td><i class="fas fa-file-csv me-1 text-muted"></i><span th:text="${b.filename()}"></span></td>
+                            <td th:text="${b.displayDate()}"></td>
+                            <td class="text-end" th:text="${b.sizeKb()} + ' KB'"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p th:if="${backups.isEmpty()}" class="text-muted mb-0"><small>No hay copias de seguridad todavía.</small></p>
+        </div>
+    </div>
+
+    <div class="card mt-3 mb-4">
         <div class="card-header">
             <i class="fas fa-database me-2"></i> Consola H2 (base de datos)
         </div>

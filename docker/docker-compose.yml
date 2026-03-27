@@ -8,6 +8,7 @@ services:
       - "8080:8080"
     volumes:
       - ../data:/app/data
+      - ../backups:/app/backups
     environment:
       - SPRING_PROFILES_ACTIVE=prod
       - IGDB_CLIENT_ID=${IGDB_CLIENT_ID}

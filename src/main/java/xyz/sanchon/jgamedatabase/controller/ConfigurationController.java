@@ -13,6 +13,7 @@ import xyz.sanchon.jgamedatabase.repository.GameRepository;
 import xyz.sanchon.jgamedatabase.repository.GenreRepository;
 import xyz.sanchon.jgamedatabase.repository.PlatformRepository;
 import xyz.sanchon.jgamedatabase.service.AppConfigurationService;
+import xyz.sanchon.jgamedatabase.service.BackupService;
 
 import java.util.List;
 
@@ -23,15 +24,18 @@ public class ConfigurationController {
     private static final List<String> PLATFORMS_TO_KEEP = List.of("PC", "Xbox 360", "Nintendo Switch");
 
     private final AppConfigurationService configService;
+    private final BackupService backupService;
     private final GameRepository gameRepository;
     private final GenreRepository genreRepository;
     private final PlatformRepository platformRepository;
 
     public ConfigurationController(AppConfigurationService configService,
+                                   BackupService backupService,
                                    GameRepository gameRepository,
                                    GenreRepository genreRepository,
                                    PlatformRepository platformRepository) {
         this.configService = configService;
+        this.backupService = backupService;
         this.gameRepository = gameRepository;
         this.genreRepository = genreRepository;
         this.platformRepository = platformRepository;
@@ -44,6 +48,8 @@ public class ConfigurationController {
         model.addAttribute("ggDealsApiKey", configService.getGgDealsApiKey());
         model.addAttribute("ggDealsRegion", configService.getGgDealsRegion());
         model.addAttribute("h2ConsoleEnabled", configService.isH2ConsoleEnabled());
+        model.addAttribute("backupDir", backupService.getBackupDir());
+        model.addAttribute("backups", backupService.listBackups());
         return "configuration";
     }
 
@@ -66,8 +72,21 @@ public class ConfigurationController {
         model.addAttribute("ggDealsApiKey", ggDealsApiKey);
         model.addAttribute("ggDealsRegion", ggDealsRegion);
         model.addAttribute("h2ConsoleEnabled", configService.isH2ConsoleEnabled());
+        model.addAttribute("backupDir", backupService.getBackupDir());
+        model.addAttribute("backups", backupService.listBackups());
 
         return "configuration";
+    }
+
+    @PostMapping("/backup")
+    public String backup(RedirectAttributes redirectAttributes) {
+        try {
+            String path = backupService.backup();
+            redirectAttributes.addFlashAttribute("message", "Copia de seguridad creada: " + path);
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Error al crear la copia de seguridad: " + e.getMessage());
+        }
+        return "redirect:/configuration";
     }
 
     @PostMapping("/h2-console/toggle")
