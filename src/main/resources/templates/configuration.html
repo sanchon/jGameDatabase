@@ -93,6 +93,26 @@
 
         <button type="submit" class="btn btn-primary">Save Configuration</button>
     </form>
+
+    <div class="card mb-4 border-danger">
+        <div class="card-header bg-danger text-white">
+            <i class="fas fa-exclamation-triangle mr-2"></i> Zona de peligro
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Reiniciar base de datos</h5>
+            <p class="card-text">
+                Elimina <strong>todos los juegos</strong> y <strong>todos los géneros</strong> de la base de datos.
+                Las plataformas <strong>PC</strong>, <strong>Xbox 360</strong> y <strong>Nintendo Switch</strong> se conservarán;
+                el resto de plataformas también se eliminará.
+            </p>
+            <form th:action="@{/configuration/reset}" method="post"
+                  onsubmit="return confirm('¿Estás seguro? Esta acción eliminará TODOS los juegos, géneros y plataformas (excepto PC, Xbox 360 y Nintendo Switch). Esta operación NO se puede deshacer.')">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash-alt mr-1"></i> Eliminar todos los datos
+                </button>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
