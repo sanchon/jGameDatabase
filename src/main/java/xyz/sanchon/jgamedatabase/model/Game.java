@@ -23,7 +23,16 @@ public class Game {
 
     private Long igdbId;
     private String coverUrl;
+
+    /** Campo legacy: texto del estado antes de la migración a game_statuses. Se conserva para compatibilidad con
+     *  esquemas antiguos y se elimina (null) tras la migración automática. */
     private String status;
+
+    /** Estado normalizado como FK. Tiene prioridad sobre el campo legacy {@code status}. */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "status_id")
+    private GameStatus gameStatus;
+
     private Double rating;
     
     @Column(columnDefinition = "TEXT")
@@ -97,12 +106,22 @@ public class Game {
         this.coverUrl = coverUrl;
     }
 
+    /** Devuelve el nombre del estado. Prioriza la FK normalizada; cae al texto legacy si aún no se ha migrado. */
     public String getStatus() {
-        return status;
+        return gameStatus != null ? gameStatus.getName() : status;
     }
 
+    /** Escribe el campo legacy. Usado por {@code @ModelAttribute} y durante la migración. */
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public GameStatus getGameStatus() {
+        return gameStatus;
+    }
+
+    public void setGameStatus(GameStatus gameStatus) {
+        this.gameStatus = gameStatus;
     }
 
     public Double getRating() {

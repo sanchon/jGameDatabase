@@ -22,10 +22,7 @@
             height: 200px;
             object-fit: cover;
         }
-        .status-badge {
-            font-size: 0.8rem;
-        }
-        .table-responsive {
+.table-responsive {
             border-radius: 0.5rem;
             box-shadow: 0 0 10px rgba(0,0,0,0.05);
         }
@@ -195,9 +192,16 @@
                         </td>
                         <td th:text="${game.releaseYear}">1990</td>
                         <td>
-                            <span class="badge status-badge"
-                                  th:classappend="${game.status == 'Terminado' ? 'bg-success' : (game.status == 'Jugando' ? 'bg-primary' : (game.status == 'Abandonado' ? 'bg-danger' : 'bg-warning text-dark'))}"
-                                  th:text="${game.status}">Terminado</span>
+                            <span class="badge d-inline-flex align-items-center gap-1"
+                                  th:classappend="${game.status == 'Terminado'  ? 'bg-success'  :
+                                                  (game.status == 'Jugando'    ? 'bg-primary'  :
+                                                  (game.status == 'Abandonado' ? 'bg-danger'   : 'bg-secondary'))}">
+                                <i class="fas fa-xs"
+                                   th:classappend="${game.status == 'Terminado'  ? 'fa-check' :
+                                                   (game.status == 'Jugando'    ? 'fa-play'  :
+                                                   (game.status == 'Abandonado' ? 'fa-ban'   : 'fa-circle'))}"></i>
+                                <span th:text="${game.status}"></span>
+                            </span>
                         </td>
                         <td>
                             <div th:if="${game.rating != null}" class="d-flex align-items-center">

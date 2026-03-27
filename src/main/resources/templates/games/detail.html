@@ -75,9 +75,16 @@
                                 <i class="fas fa-star me-1"></i><span th:text="${game.rating}">8</span>
                             </span>
                             <span th:if="${!game.wishlist && game.status != null}"
-                                  class="badge"
-                                  th:classappend="${game.status == 'Terminado' ? 'bg-success' : (game.status == 'Jugando' ? 'bg-primary' : (game.status == 'Abandonado' ? 'bg-danger' : 'bg-secondary'))}"
-                                  th:text="${game.status}">Sin empezar</span>
+                                  class="badge d-inline-flex align-items-center gap-1"
+                                  th:classappend="${game.status == 'Terminado'  ? 'bg-success'  :
+                                                  (game.status == 'Jugando'    ? 'bg-primary'  :
+                                                  (game.status == 'Abandonado' ? 'bg-danger'   : 'bg-secondary'))}">
+                                <i class="fas fa-xs"
+                                   th:classappend="${game.status == 'Terminado'  ? 'fa-check' :
+                                                   (game.status == 'Jugando'    ? 'fa-play'  :
+                                                   (game.status == 'Abandonado' ? 'fa-ban'   : 'fa-circle'))}"></i>
+                                <span th:text="${game.status}"></span>
+                            </span>
                             <span th:if="${game.wishlist}" class="badge bg-danger bg-opacity-75">Lista de deseados</span>
                         </div>
 

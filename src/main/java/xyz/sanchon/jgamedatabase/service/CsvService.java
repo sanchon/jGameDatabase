@@ -9,7 +9,9 @@ import org.springframework.web.multipart.MultipartFile;
 import xyz.sanchon.jgamedatabase.model.Game;
 import xyz.sanchon.jgamedatabase.model.Genre;
 import xyz.sanchon.jgamedatabase.model.Platform;
+import xyz.sanchon.jgamedatabase.model.GameStatus;
 import xyz.sanchon.jgamedatabase.repository.GameRepository;
+import xyz.sanchon.jgamedatabase.repository.GameStatusRepository;
 import xyz.sanchon.jgamedatabase.repository.GenreRepository;
 import xyz.sanchon.jgamedatabase.repository.PlatformRepository;
 
@@ -25,11 +27,14 @@ public class CsvService {
     private final GameRepository gameRepository;
     private final PlatformRepository platformRepository;
     private final GenreRepository genreRepository;
+    private final GameStatusRepository gameStatusRepository;
 
-    public CsvService(GameRepository gameRepository, PlatformRepository platformRepository, GenreRepository genreRepository) {
+    public CsvService(GameRepository gameRepository, PlatformRepository platformRepository,
+                      GenreRepository genreRepository, GameStatusRepository gameStatusRepository) {
         this.gameRepository = gameRepository;
         this.platformRepository = platformRepository;
         this.genreRepository = genreRepository;
+        this.gameStatusRepository = gameStatusRepository;
     }
 
     public void importCsv(MultipartFile file) throws IOException {
@@ -103,7 +108,14 @@ public class CsvService {
 
                 String status = getRecordValue(csvRecord, "estado");
                 if (status != null && !status.isEmpty()) {
-                    game.setStatus(status);
+                    GameStatus gs = gameStatusRepository.findByName(status).orElse(null);
+                    if (gs != null) {
+                        game.setGameStatus(gs);
+                        game.setStatus(null);
+                    } else {
+                        // Estado desconocido: guardar como texto y dejar que la migración lo resuelva
+                        game.setStatus(status);
+                    }
                 }
 
                 String ratingStr = getRecordValue(csvRecord, "rating");

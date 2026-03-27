@@ -1,6 +1,7 @@
 package xyz.sanchon.jgamedatabase.bootstrap;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import xyz.sanchon.jgamedatabase.model.Game;
 import xyz.sanchon.jgamedatabase.model.Genre;
@@ -10,6 +11,7 @@ import xyz.sanchon.jgamedatabase.repository.GenreRepository;
 import xyz.sanchon.jgamedatabase.repository.PlatformRepository;
 
 @Component
+@Order(1)
 public class DataInitializer implements CommandLineRunner {
 
     private final GameRepository gameRepository;

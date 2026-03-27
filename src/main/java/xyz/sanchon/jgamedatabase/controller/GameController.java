@@ -18,6 +18,7 @@ import xyz.sanchon.jgamedatabase.dto.IgdbGame;
 import xyz.sanchon.jgamedatabase.dto.SteamSearchHitDto;
 import xyz.sanchon.jgamedatabase.model.Game;
 import xyz.sanchon.jgamedatabase.repository.GameRepository;
+import xyz.sanchon.jgamedatabase.repository.GameStatusRepository;
 import xyz.sanchon.jgamedatabase.repository.GenreRepository;
 import xyz.sanchon.jgamedatabase.repository.PlatformRepository;
 import xyz.sanchon.jgamedatabase.service.CsvService;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
 public class GameController {
 
     private final GameRepository gameRepository;
+    private final GameStatusRepository gameStatusRepository;
     private final PlatformRepository platformRepository;
     private final GenreRepository genreRepository;
     private final IgdbService igdbService;
@@ -46,8 +48,9 @@ public class GameController {
     private final MarkdownService markdownService;
     private final CsvService csvService;
 
-    public GameController(GameRepository gameRepository, PlatformRepository platformRepository, GenreRepository genreRepository, IgdbService igdbService, GgDealsService ggDealsService, SteamStoreSearchService steamStoreSearchService, MarkdownService markdownService, CsvService csvService) {
+    public GameController(GameRepository gameRepository, GameStatusRepository gameStatusRepository, PlatformRepository platformRepository, GenreRepository genreRepository, IgdbService igdbService, GgDealsService ggDealsService, SteamStoreSearchService steamStoreSearchService, MarkdownService markdownService, CsvService csvService) {
         this.gameRepository = gameRepository;
+        this.gameStatusRepository = gameStatusRepository;
         this.platformRepository = platformRepository;
         this.genreRepository = genreRepository;
         this.igdbService = igdbService;
@@ -55,6 +58,17 @@ public class GameController {
         this.steamStoreSearchService = steamStoreSearchService;
         this.markdownService = markdownService;
         this.csvService = csvService;
+    }
+
+    private void applyStatus(Game game, String statusName) {
+        if (statusName == null || statusName.isBlank()) {
+            game.setGameStatus(null);
+        } else {
+            gameStatusRepository.findByName(statusName).ifPresent(gs -> {
+                game.setGameStatus(gs);
+                game.setStatus(null);
+            });
+        }
     }
 
     /**
@@ -166,7 +180,7 @@ public class GameController {
     public String updateStatus(@PathVariable Long id, @RequestParam String status) {
         Game game = gameRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        game.setStatus(status);
+        applyStatus(game, status);
         gameRepository.save(game);
         return "redirect:/games/detail/" + id;
     }
@@ -233,10 +247,10 @@ public class GameController {
         }
         
         if (!wishlist) {
-            // Default status for possessed games
-            game.setStatus("Sin empezar");
+            applyStatus(game, "Sin empezar");
         } else {
-             game.setStatus(null); // Wishlist games don't need a status
+            game.setGameStatus(null);
+            game.setStatus(null);
         }
 
         // Steam App ID: en colección se intenta vía IGDB; en deseados no (poco fiable) — se usa búsqueda en Steam en el formulario.
@@ -273,7 +287,11 @@ public class GameController {
     @PostMapping("/create")
     public String createGame(@ModelAttribute("game") Game game) {
         if (game.isWishlist()) {
-            game.setStatus(null); // Ensure no status for wishlist items
+            game.setStatus(null);
+            game.setGameStatus(null);
+        } else {
+            // game.getStatus() devuelve el texto del campo legacy ligado por @ModelAttribute
+            applyStatus(game, game.getStatus());
         }
         gameRepository.save(game);
         return game.isWishlist() ? "redirect:/games/wishlist" : "redirect:/games";
@@ -284,7 +302,7 @@ public class GameController {
         Game game = gameRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Invalid game Id:" + id));
         game.setWishlist(false);
-        game.setStatus("Sin empezar");
+        applyStatus(game, "Sin empezar");
         gameRepository.save(game);
         return "redirect:/games";
     }
