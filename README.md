@@ -81,12 +81,13 @@ Disponible en **http://localhost:8080**. Consulta la sección [Configuración](#
 | Área | Descripción |
 |------|-------------|
 | **Inicio** | Punto de entrada a la aplicación con accesos directos a colección, deseados y añadir juego. |
-| **Mi colección** | Listado de juegos poseídos: filtros por estado, género y plataforma (se aplican al cambiar el desplegable), ordenación por título, año o nota, columnas de precio GG.deals cuando hay Steam App ID. |
+| **Mi colección** | Listado de juegos poseídos: filtros por estado, género y plataforma (se aplican al cambiar el desplegable), ordenación por título, año o nota. El título es un enlace directo a la página de detalle. |
 | **Deseados** | Lista de juegos deseados; búsqueda de precios en GG.deals bajo demanda. |
 | **Añadir juego** | Búsqueda en IGDB y formulario de alta. El desplegable de plataformas se rellena automáticamente con las plataformas que IGDB reporta para ese juego; si alguna no existe en la base de datos local, se crea al cargar el formulario. En deseados, búsqueda adicional en la **tienda Steam** para guardar el **Steam App ID** (necesario para precios). |
-| **Detalle** | Vista `/games/detail/{id}`: portada, metadatos, enlaces a IGDB / Steam / Metacritic; **notas en Markdown** con edición integrada y vista renderizada. |
-| **Editar** | Estado, valoración, notas, Steam App ID, etc. |
-| **Configuración** | Accesible desde la barra de navegación en todas las páginas (`/configuration`). Permite gestionar desde la UI las credenciales de **IGDB** (client ID y secret) y **GG.deals** (API key y región), como alternativa a `application-local.properties` o variables de entorno. Es la vía recomendada cuando se usa Docker. Incluye también una opción para **reiniciar la base de datos** (elimina todos los juegos, géneros y plataformas excepto PC, Xbox 360 y Nintendo Switch). |
+| **Detalle** | Vista `/games/detail/{id}`: portada, metadatos, enlaces a IGDB / Metacritic; **notas en Markdown** con edición integrada y vista renderizada. El **estado se puede cambiar directamente** desde el detalle sin salir de la página. Incluye botón de eliminar con confirmación. |
+| **Estados de juego** | Estados canónicos: *Sin empezar*, *Jugando*, *Terminado*, *Abandonado*. Cada estado tiene color e icono propios en las listas y el detalle. La migración automática al arrancar convierte cualquier texto legacy (p. ej. `Completado`, `Playing`, `Backlog`) al estado canónico correspondiente. |
+| **Configuración** | Accesible desde la barra de navegación en todas las páginas (`/configuration`). Gestiona credenciales de **IGDB** y **GG.deals**. Incluye opción para **reiniciar la base de datos** y para **activar/desactivar la consola H2** (muestra el enlace y credenciales cuando está activa). |
+| **Backups CSV** | Genera un CSV en el servidor (`/app/backups` en Docker, `~/.jgamedatabase/backups` en portable, `./backups` en dev) desde `/configuration`, con nombre timestamped. Distinto a la exportación al navegador. |
 | **CSV** | Exportar e importar **todos** los juegos (colección y deseados) desde la vista de colección. Los campos exportados/importados incluyen: `id`, `titulo`, `año`, `plataforma`, `genero`, `estado`, `rating`, `igdb_id`, `steam_app_id`, `igdb_slug`, `portada_url`, `notas` y `wishlist`. Al importar, las plataformas y géneros que no existan en la base de datos se crean automáticamente. |
 
 Las credenciales de APIs externas se pueden configurar mediante `application-local.properties`, variables de entorno, o directamente desde la UI en la página de [Configuración](#configuración).
@@ -151,13 +152,25 @@ Cada entorno accede a su propio fichero independiente, sin conflictos de bloqueo
 
 > **Datos de muestra**: si la base de datos está vacía al arrancar, la aplicación inserta automáticamente 3 juegos de ejemplo (Zelda: Breath of the Wild, Elden Ring, Hollow Knight) junto con 4 plataformas (PlayStation 5, Xbox Series X, Nintendo Switch, PC) y 4 géneros (RPG, Action, Adventure, Platformer).
 
+### Backups CSV
+
+La página de Configuración permite generar backups CSV en el servidor. La ruta varía según el entorno:
+
+| Entorno | Ruta de backups |
+|---------|----------------|
+| Local (Gradle) | `./backups/` |
+| Portable | `~/.jgamedatabase/backups/` |
+| Docker | `/app/backups/` (mapeado al volumen `../backups` del host) |
+
+Los ficheros se nombran `backup_YYYYMMDD_HHmmss.csv`. Son independientes de la exportación al navegador y sirven como copia de seguridad en el servidor.
+
 ### Consola H2
 
-Con la app en marcha, accesible en **http://localhost:8080/h2-console**:
+La consola H2 se activa y desactiva desde la página de **Configuración** sin necesidad de reiniciar. Cuando está activa, la propia página muestra el enlace y las credenciales:
 
 | Campo | Valor |
 |-------|-------|
-| JDBC URL | `jdbc:h2:file:./data/jgamedatabase` |
+| JDBC URL | `jdbc:h2:file:./data/jgamedatabase` (local) / `jdbc:h2:file:/app/data/jgamedatabase` (Docker) |
 | Usuario | `sa` |
 | Contraseña | `password` |
 
@@ -317,6 +330,7 @@ docker run -d \
 - `-d`: Ejecuta el contenedor en segundo plano (detached mode).
 - `-p 8080:8080`: Mapea el puerto 8080 del servidor al puerto 8080 del contenedor. La aplicación será accesible en `http://localhost:8080` (o la IP del servidor).
 - `-v jgamedatabase-data:/app/data`: Crea un **volumen persistente**. Esto es crítico para que la base de datos H2 no se borre si el contenedor se apaga o actualiza.
+  > **Nota:** con `docker run` los backups CSV no quedan montados fuera del contenedor. Usa `docker-compose.yml` para tener el volumen `backups` persistido en el host.
 - `-e ...`: Variables de entorno necesarias para las integraciones de IGDB y GG.deals. Reemplaza con tus propias credenciales.
 - `--restart unless-stopped`: Asegura que el contenedor arranque automáticamente si el servidor se reinicia o Docker se reinicia.
 
