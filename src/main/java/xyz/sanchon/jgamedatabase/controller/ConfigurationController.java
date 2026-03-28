@@ -1,5 +1,7 @@
 package xyz.sanchon.jgamedatabase.controller;
 
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,17 +30,20 @@ public class ConfigurationController {
     private final GameRepository gameRepository;
     private final GenreRepository genreRepository;
     private final PlatformRepository platformRepository;
+    private final MessageSource messageSource;
 
     public ConfigurationController(AppConfigurationService configService,
                                    BackupService backupService,
                                    GameRepository gameRepository,
                                    GenreRepository genreRepository,
-                                   PlatformRepository platformRepository) {
+                                   PlatformRepository platformRepository,
+                                   MessageSource messageSource) {
         this.configService = configService;
         this.backupService = backupService;
         this.gameRepository = gameRepository;
         this.genreRepository = genreRepository;
         this.platformRepository = platformRepository;
+        this.messageSource = messageSource;
     }
 
     @GetMapping
@@ -66,7 +71,7 @@ public class ConfigurationController {
         configService.setGgDealsApiKey(ggDealsApiKey);
         configService.setGgDealsRegion(ggDealsRegion);
 
-        model.addAttribute("message", "Configuration saved successfully!");
+        model.addAttribute("message", messageSource.getMessage("flash.config.saved", null, LocaleContextHolder.getLocale()));
         model.addAttribute("igdbClientId", igdbClientId);
         model.addAttribute("igdbClientSecret", igdbClientSecret);
         model.addAttribute("ggDealsApiKey", ggDealsApiKey);
@@ -82,9 +87,11 @@ public class ConfigurationController {
     public String backup(RedirectAttributes redirectAttributes) {
         try {
             String path = backupService.backup();
-            redirectAttributes.addFlashAttribute("message", "Copia de seguridad creada: " + path);
+            redirectAttributes.addFlashAttribute("message",
+                    messageSource.getMessage("flash.backup.created", new Object[]{path}, LocaleContextHolder.getLocale()));
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Error al crear la copia de seguridad: " + e.getMessage());
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    messageSource.getMessage("flash.backup.error", new Object[]{e.getMessage()}, LocaleContextHolder.getLocale()));
         }
         return "redirect:/configuration";
     }
@@ -93,8 +100,9 @@ public class ConfigurationController {
     public String toggleH2Console(RedirectAttributes redirectAttributes) {
         boolean current = configService.isH2ConsoleEnabled();
         configService.setH2ConsoleEnabled(!current);
+        String key = !current ? "flash.h2.enabled" : "flash.h2.disabled";
         redirectAttributes.addFlashAttribute("message",
-                "Consola H2 " + (!current ? "activada" : "desactivada") + " correctamente.");
+                messageSource.getMessage(key, null, LocaleContextHolder.getLocale()));
         return "redirect:/configuration";
     }
 
@@ -106,8 +114,9 @@ public class ConfigurationController {
         genreRepository.deleteAll(unusedGenres);
 
         redirectAttributes.addFlashAttribute("message",
-                "Limpieza completada: " + unusedPlatforms.size() + " plataforma(s) y " +
-                unusedGenres.size() + " género(s) sin juegos eliminados.");
+                messageSource.getMessage("flash.cleanup.done",
+                        new Object[]{unusedPlatforms.size(), unusedGenres.size()},
+                        LocaleContextHolder.getLocale()));
         return "redirect:/configuration";
     }
 
@@ -119,7 +128,8 @@ public class ConfigurationController {
                 .filter(p -> !PLATFORMS_TO_KEEP.contains(p.getName()))
                 .forEach(platformRepository::delete);
 
-        redirectAttributes.addFlashAttribute("message", "Base de datos reiniciada. Se han eliminado todos los juegos y géneros. Las plataformas PC, Xbox 360 y Nintendo Switch se han conservado.");
+        redirectAttributes.addFlashAttribute("message",
+                messageSource.getMessage("flash.reset.done", null, LocaleContextHolder.getLocale()));
         return "redirect:/configuration";
     }
 }

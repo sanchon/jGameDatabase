@@ -41,7 +41,7 @@ public class GgDealsService {
     }
 
     /**
-     * Obtiene precios por Steam App ID e incluye trazas de petición/respuesta para depuración.
+     * Fetches prices by Steam App ID and includes request/response traces for debugging.
      */
     public GgDealsFetchResult fetchPricesBySteamAppIdsWithDebug(List<Long> steamAppIds) {
         Map<Long, GgDealsPriceEntry> out = new HashMap<>();
@@ -77,7 +77,7 @@ public class GgDealsService {
                         .block();
 
                 if (http == null) {
-                    logs.add(new GgDealsApiCallLog("GET", maskedUrl, null, null, "Respuesta vacía"));
+                    logs.add(new GgDealsApiCallLog("GET", maskedUrl, null, null, "Empty response"));
                     continue;
                 }
 
@@ -87,7 +87,7 @@ public class GgDealsService {
                 boolean success = root.path("success").asBoolean(false);
                 JsonNode dataNode = root.get("data");
                 if (!success || dataNode == null || !dataNode.isObject()) {
-                    log.warn("GG.deals API success=false o data no es objeto para ids={}", idsParam);
+                    log.warn("GG.deals API success=false or data is not an object for ids={}", idsParam);
                     continue;
                 }
                 Iterator<String> names = dataNode.fieldNames();
@@ -102,11 +102,11 @@ public class GgDealsService {
                         GgDealsPriceEntry entry = objectMapper.treeToValue(val, GgDealsPriceEntry.class);
                         out.put(steamId, entry);
                     } catch (Exception ex) {
-                        log.debug("Entrada GG.deals omitida para clave {}: {}", key, ex.getMessage());
+                        log.debug("GG.deals entry skipped for key {}: {}", key, ex.getMessage());
                     }
                 }
             } catch (Exception ex) {
-                log.warn("Error al consultar GG.deals para ids={}: {}", idsParam, ex.getMessage());
+                log.warn("Error querying GG.deals for ids={}: {}", idsParam, ex.getMessage());
                 logs.add(new GgDealsApiCallLog("GET", maskedUrl, null, null, ex.getMessage()));
             }
         }
@@ -117,7 +117,7 @@ public class GgDealsService {
         if (url == null) {
             return "";
         }
-        return url.replaceFirst("(key=)[^&]*", "$1<oculto>");
+        return url.replaceFirst("(key=)[^&]*", "$1<hidden>");
     }
 
     private String prettyJsonIfPossible(String raw) {

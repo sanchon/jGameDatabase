@@ -2,7 +2,7 @@
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Configuration</title>
+    <title th:text="#{config.title}">Configuration</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,43 +16,48 @@
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
+<!-- i18n confirm strings for JS -->
+<div id="jsConfirm" style="display:none;"
+     th:data-h2-disable="#{config.h2.confirm.disable}"
+     th:data-cleanup="#{config.danger.cleanup.confirm}"
+     th:data-reset="#{config.danger.reset.confirm}">
+</div>
+
 <div class="container mt-5">
-    <h1 class="mb-4">Application Configuration</h1>
+    <h1 class="mb-4" th:text="#{config.heading}">Application Configuration</h1>
 
     <div th:if="${message}" class="alert alert-success" role="alert" th:text="${message}"></div>
     <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}"></div>
 
     <form th:action="@{/configuration}" method="post">
         <div class="card mb-4">
-            <div class="card-header">
+            <div class="card-header" th:text="#{config.igdb.section}">
                 IGDB Configuration
             </div>
             <div class="card-body">
-                <p>To obtain these keys, you need to register an application on the <a href="https://api-docs.igdb.com/#account-creation" target="_blank">IGDB Developer Portal</a>.</p>
                 <div class="mb-3">
-                    <label for="igdbClientId" class="form-label">IGDB Client ID:</label>
+                    <label for="igdbClientId" class="form-label" th:text="#{config.igdb.clientId}">IGDB Client ID:</label>
                     <input type="text" class="form-control" id="igdbClientId" name="igdbClientId" th:value="${igdbClientId}">
                 </div>
                 <div class="mb-3">
-                    <label for="igdbClientSecret" class="form-label">IGDB Client Secret:</label>
+                    <label for="igdbClientSecret" class="form-label" th:text="#{config.igdb.clientSecret}">IGDB Client Secret:</label>
                     <input type="password" class="form-control" id="igdbClientSecret" name="igdbClientSecret" th:value="${igdbClientSecret}">
-                    <small class="help-block">This value is secret. Keep it safe.</small>
+                    <small class="help-block" th:text="#{config.igdb.clientSecret.hint}">This value is secret. Keep it safe.</small>
                 </div>
             </div>
         </div>
 
         <div class="card mb-4">
-            <div class="card-header">
+            <div class="card-header" th:text="#{config.ggdeals.section}">
                 GG.deals Configuration
             </div>
             <div class="card-body">
-                <p>You can request an API key from <a href="https://gg.deals/api/" target="_blank">GG.deals API page</a>.</p>
                 <div class="mb-3">
-                    <label for="ggDealsApiKey" class="form-label">GG.deals API Key:</label>
+                    <label for="ggDealsApiKey" class="form-label" th:text="#{config.ggdeals.apiKey}">GG.deals API Key:</label>
                     <input type="text" class="form-control" id="ggDealsApiKey" name="ggDealsApiKey" th:value="${ggDealsApiKey}">
                 </div>
                 <div class="mb-3">
-                    <label for="ggDealsRegion" class="form-label">GG.deals Region:</label>
+                    <label for="ggDealsRegion" class="form-label" th:text="#{config.ggdeals.region}">GG.deals Region:</label>
                     <select class="form-select" id="ggDealsRegion" name="ggDealsRegion">
                         <option value="US" th:selected="${ggDealsRegion == 'US'}">United States</option>
                         <option value="EU1" th:selected="${ggDealsRegion == 'EU1'}">Europe 1</option>
@@ -61,38 +66,37 @@
                         <option value="AU" th:selected="${ggDealsRegion == 'AU'}">Australia</option>
                         <option value="BR" th:selected="${ggDealsRegion == 'BR'}">Brazil</option>
                         <option value="CA" th:selected="${ggDealsRegion == 'CA'}">Canada</option>
-                        <!-- Add other regions as needed -->
-                         <option value="es" th:selected="${ggDealsRegion == 'es'}">Spain (ES)</option>
+                        <option value="es" th:selected="${ggDealsRegion == 'es'}">Spain (ES)</option>
                     </select>
-                     <small class="help-block">Select your preferred region for price tracking.</small>
+                    <small class="help-block" th:text="#{config.ggdeals.region.hint}">Select your preferred region for price tracking.</small>
                 </div>
             </div>
         </div>
 
-        <button type="submit" class="btn btn-primary">Save Configuration</button>
+        <button type="submit" class="btn btn-primary" th:text="#{config.btn.save}">Save Configuration</button>
     </form>
 
     <div class="card mt-5 mb-4">
         <div class="card-header">
-            <i class="fas fa-box-archive me-2"></i> Copias de seguridad
+            <i class="fas fa-box-archive me-2"></i> <span th:text="#{config.backups.section}">Backups</span>
         </div>
         <div class="card-body">
             <p class="card-text">
-                Guarda una copia de todos los juegos en formato CSV en el servidor.
-                Directorio: <code th:text="${backupDir}"></code>
+                <span th:text="#{config.backups.desc}">Save a copy of all games in CSV format on the server. Directory:</span>
+                <code th:text="${backupDir}"></code>
             </p>
             <form th:action="@{/configuration/backup}" method="post" class="mb-3">
                 <button type="submit" class="btn btn-outline-primary">
-                    <i class="fas fa-floppy-disk me-1"></i> Hacer copia de seguridad ahora
+                    <i class="fas fa-floppy-disk me-1"></i> <span th:text="#{config.backups.btn}">Create backup now</span>
                 </button>
             </form>
             <div th:if="${!backups.isEmpty()}">
                 <table class="table table-sm table-bordered mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th>Archivo</th>
-                            <th>Fecha</th>
-                            <th class="text-end">Tamaño</th>
+                            <th th:text="#{config.backups.col.file}">File</th>
+                            <th th:text="#{config.backups.col.date}">Date</th>
+                            <th class="text-end" th:text="#{config.backups.col.size}">Size</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -104,28 +108,27 @@
                     </tbody>
                 </table>
             </div>
-            <p th:if="${backups.isEmpty()}" class="text-muted mb-0"><small>No hay copias de seguridad todavía.</small></p>
+            <p th:if="${backups.isEmpty()}" class="text-muted mb-0"><small th:text="#{config.backups.empty}">No backups yet.</small></p>
         </div>
     </div>
 
     <div class="card mt-3 mb-4">
         <div class="card-header">
-            <i class="fas fa-database me-2"></i> Consola H2 (base de datos)
+            <i class="fas fa-database me-2"></i> <span th:text="#{config.h2.section}">H2 Console (database)</span>
         </div>
         <div class="card-body">
-            <p class="card-text">
-                Activa temporalmente la consola web de H2 para consultar o modificar la base de datos directamente.
-                <strong>Desactívala cuando termines</strong>, ya que no requiere autenticación adicional.
+            <p class="card-text" th:text="#{config.h2.desc}">
+                Temporarily enable the H2 web console to query or modify the database directly.
             </p>
 
             <div th:if="${h2ConsoleEnabled}" class="alert alert-warning mb-3" role="alert">
                 <i class="fas fa-exclamation-triangle me-1"></i>
-                <strong>Consola activa.</strong>
-                Accede en: <a href="/h2-console" target="_blank">/h2-console</a><br>
+                <strong th:text="#{config.h2.active.label}">Console active.</strong>
+                <span th:text="#{config.h2.active.access}">Access at:</span> <a href="/h2-console" target="_blank">/h2-console</a><br>
                 <small>
                     <strong>JDBC URL:</strong> <code>jdbc:h2:file:/app/data/jgamedatabase</code> &nbsp;
                     <strong>User:</strong> <code>sa</code> &nbsp;
-                    <strong>Password:</strong> <em>(vacío)</em>
+                    <strong>Password:</strong> <em th:text="#{config.h2.active.empty}">(empty)</em>
                 </small>
             </div>
 
@@ -133,9 +136,10 @@
                 <button type="submit"
                         th:classappend="${h2ConsoleEnabled} ? 'btn-warning' : 'btn-outline-secondary'"
                         class="btn"
-                        th:onclick="${h2ConsoleEnabled} ? 'return confirm(\'¿Desactivar la consola H2?\')' : ''">
+                        th:data-confirm-disable="#{config.h2.confirm.disable}"
+                        th:onclick="${h2ConsoleEnabled} ? 'return confirm(this.dataset.confirmDisable)' : ''">
                     <i th:classappend="${h2ConsoleEnabled} ? 'fa-lock' : 'fa-lock-open'" class="fas me-1"></i>
-                    <span th:text="${h2ConsoleEnabled} ? 'Desactivar consola H2' : 'Activar consola H2'">Activar consola H2</span>
+                    <span th:text="${h2ConsoleEnabled} ? #{config.h2.btn.disable} : #{config.h2.btn.enable}">Enable H2 console</span>
                 </button>
             </form>
         </div>
@@ -143,33 +147,34 @@
 
     <div class="card mt-3 mb-4 border-danger">
         <div class="card-header bg-danger text-white">
-            <i class="fas fa-exclamation-triangle me-2"></i> Zona de peligro
+            <i class="fas fa-exclamation-triangle me-2"></i> <span th:text="#{config.danger.section}">Danger zone</span>
         </div>
         <div class="card-body">
-            <h5 class="card-title">Limpiar plataformas y géneros sin uso</h5>
-            <p class="card-text">
-                Elimina las <strong>plataformas</strong> y los <strong>géneros</strong> que no tienen ningún juego asociado.
-                Los juegos no se ven afectados.
+            <h5 class="card-title" th:text="#{config.danger.cleanup.title}">Clean up unused platforms and genres</h5>
+            <p class="card-text" th:text="#{config.danger.cleanup.desc}">
+                Removes platforms and genres that have no games associated. Games are not affected.
             </p>
             <form th:action="@{/configuration/cleanup}" method="post"
-                  onsubmit="return confirm('¿Eliminar plataformas y géneros sin juegos asociados?')">
-                <button type="submit" class="btn btn-warning">
-                    <i class="fas fa-broom me-1"></i> Limpiar huérfanos
+                  id="cleanupForm">
+                <button type="submit" class="btn btn-warning"
+                        th:data-confirm="#{config.danger.cleanup.confirm}"
+                        onclick="return confirm(this.dataset.confirm)">
+                    <i class="fas fa-broom me-1"></i> <span th:text="#{config.danger.cleanup.btn}">Clean up orphans</span>
                 </button>
             </form>
 
             <hr>
 
-            <h5 class="card-title">Reiniciar base de datos</h5>
-            <p class="card-text">
-                Elimina <strong>todos los juegos</strong> y <strong>todos los géneros</strong> de la base de datos.
-                Las plataformas <strong>PC</strong>, <strong>Xbox 360</strong> y <strong>Nintendo Switch</strong> se conservarán;
-                el resto de plataformas también se eliminará.
+            <h5 class="card-title" th:text="#{config.danger.reset.title}">Reset database</h5>
+            <p class="card-text" th:text="#{config.danger.reset.desc}">
+                Deletes all games and all genres from the database.
             </p>
             <form th:action="@{/configuration/reset}" method="post"
-                  onsubmit="return confirm('¿Estás seguro? Esta acción eliminará TODOS los juegos, géneros y plataformas (excepto PC, Xbox 360 y Nintendo Switch). Esta operación NO se puede deshacer.')">
-                <button type="submit" class="btn btn-danger">
-                    <i class="fas fa-trash-alt me-1"></i> Eliminar todos los datos
+                  id="resetForm">
+                <button type="submit" class="btn btn-danger"
+                        th:data-confirm="#{config.danger.reset.confirm}"
+                        onclick="return confirm(this.dataset.confirm)">
+                    <i class="fas fa-trash-alt me-1"></i> <span th:text="#{config.danger.reset.btn}">Delete all data</span>
                 </button>
             </form>
         </div>

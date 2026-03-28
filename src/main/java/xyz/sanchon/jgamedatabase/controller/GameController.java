@@ -72,7 +72,7 @@ public class GameController {
     }
 
     /**
-     * Búsqueda en la tienda Steam (solo usada desde el formulario de deseados).
+     * Steam store search (only used from the wishlist form).
      */
     @GetMapping(value = "/api/steam-search", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
@@ -248,19 +248,19 @@ public class GameController {
         }
         
         if (!wishlist) {
-            applyStatus(game, "Sin empezar");
+            applyStatus(game, "Not started");
         } else {
             game.setGameStatus(null);
             game.setStatus(null);
         }
 
-        // Steam App ID: en colección se intenta vía IGDB; en deseados no (poco fiable) — se usa búsqueda en Steam en el formulario.
+        // Steam App ID: for collection it is attempted via IGDB; for wishlist it is not (unreliable) — Steam search is used in the form.
         if (igdbId != null && !wishlist) {
             igdbService.findSteamAppIdForIgdbGame(igdbId).ifPresent(game::setSteamAppId);
         }
         
-        // Plataformas: usar las que vienen de IGDB (creándolas en BD si no existen),
-        // o todas las de BD como fallback si no hay info de IGDB.
+        // Platforms: use those provided by IGDB (creating them in the DB if they don't exist),
+        // or all DB platforms as fallback if there is no IGDB info.
         List<xyz.sanchon.jgamedatabase.model.Platform> platforms;
         if (platformsParam != null && !platformsParam.isBlank()) {
             platforms = Arrays.stream(platformsParam.split(","))
@@ -291,7 +291,7 @@ public class GameController {
             game.setStatus(null);
             game.setGameStatus(null);
         } else {
-            // game.getStatus() devuelve el texto del campo legacy ligado por @ModelAttribute
+            // game.getStatus() returns the legacy field text bound by @ModelAttribute
             applyStatus(game, game.getStatus());
         }
         gameRepository.save(game);
@@ -303,7 +303,7 @@ public class GameController {
         Game game = gameRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Invalid game Id:" + id));
         game.setWishlist(false);
-        applyStatus(game, "Sin empezar");
+        applyStatus(game, "Not started");
         gameRepository.save(game);
         return "redirect:/games";
     }

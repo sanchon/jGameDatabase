@@ -67,9 +67,9 @@ public class CsvService {
                     }
                 }
 
-                game.setTitle(getRecordValue(csvRecord, "titulo"));
-                
-                String yearStr = getRecordValue(csvRecord, "año");
+                game.setTitle(getRecordValue(csvRecord, "title"));
+
+                String yearStr = getRecordValue(csvRecord, "year");
                 if (yearStr != null && !yearStr.isEmpty()) {
                     try {
                         game.setReleaseYear(Integer.parseInt(yearStr));
@@ -78,7 +78,7 @@ public class CsvService {
                     }
                 }
 
-                String platformName = getRecordValue(csvRecord, "plataforma");
+                String platformName = getRecordValue(csvRecord, "platform");
                 if (platformName != null && !platformName.isEmpty()) {
                     Optional<Platform> platformOpt = platformRepository.findByName(platformName);
                     Platform platform;
@@ -92,7 +92,7 @@ public class CsvService {
                     game.setPlatform(platform);
                 }
 
-                String genreName = getRecordValue(csvRecord, "genero");
+                String genreName = getRecordValue(csvRecord, "genre");
                 if (genreName != null && !genreName.isEmpty()) {
                     Optional<Genre> genreOpt = genreRepository.findByName(genreName);
                     Genre genre;
@@ -106,14 +106,14 @@ public class CsvService {
                     game.setGenre(genre);
                 }
 
-                String status = getRecordValue(csvRecord, "estado");
+                String status = getRecordValue(csvRecord, "status");
                 if (status != null && !status.isEmpty()) {
                     GameStatus gs = gameStatusRepository.findByName(status).orElse(null);
                     if (gs != null) {
                         game.setGameStatus(gs);
                         game.setStatus(null);
                     } else {
-                        // Estado desconocido: guardar como texto y dejar que la migración lo resuelva
+                        // Unknown status: save as text and let the migration resolve it
                         game.setStatus(status);
                     }
                 }
@@ -146,8 +146,8 @@ public class CsvService {
                 }
 
                 game.setIgdbSlug(getRecordValue(csvRecord, "igdb_slug"));
-                game.setCoverUrl(getRecordValue(csvRecord, "portada_url"));
-                game.setNotes(getRecordValue(csvRecord, "notas"));
+                game.setCoverUrl(getRecordValue(csvRecord, "cover_url"));
+                game.setNotes(getRecordValue(csvRecord, "notes"));
 
                 String wishlistStr = getRecordValue(csvRecord, "wishlist");
                 if (wishlistStr != null && !wishlistStr.isEmpty()) {
@@ -167,7 +167,7 @@ public class CsvService {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
              CSVPrinter csvPrinter = new CSVPrinter(new PrintWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8)), 
                      CSVFormat.DEFAULT.builder()
-                             .setHeader("id", "titulo", "año", "plataforma", "genero", "estado", "rating", "igdb_id", "steam_app_id", "igdb_slug", "portada_url", "notas", "wishlist")
+                             .setHeader("id", "title", "year", "platform", "genre", "status", "rating", "igdb_id", "steam_app_id", "igdb_slug", "cover_url", "notes", "wishlist")
                              .build())) {
 
             for (Game game : games) {

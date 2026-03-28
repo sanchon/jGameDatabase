@@ -88,7 +88,7 @@ public class IgdbService {
     }
 
     /**
-     * Obtiene el Steam App ID desde IGDB: primero {@code external_games} (Steam), si no, URL de tienda Steam en {@code websites}.
+     * Fetches the Steam App ID from IGDB: first via {@code external_games} (Steam), otherwise via Steam store URL in {@code websites}.
      */
     public Optional<Long> findSteamAppIdForIgdbGame(Long igdbGameId) {
         if (igdbGameId == null) {
@@ -131,7 +131,7 @@ public class IgdbService {
         return Optional.empty();
     }
 
-    /** Categoría website Steam en IGDB = 13. */
+    /** Steam website category in IGDB = 13. */
     private Optional<Long> findSteamAppIdFromWebsites(Long igdbGameId) {
         String token = getAccessToken();
         String body = "fields url; where game = " + igdbGameId + " & category = 13; limit 10;";

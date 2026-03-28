@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Búsqueda en la API pública de la tienda Steam ({@code /api/storesearch/}).
+ * Search via the public Steam store API ({@code /api/storesearch/}).
  */
 @Service
 public class SteamStoreSearchService {

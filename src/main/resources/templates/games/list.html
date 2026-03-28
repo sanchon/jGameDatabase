@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi Colección - jGameDatabase</title>
+    <title th:text="#{list.title}">My Collection - jGameDatabase</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -49,22 +49,22 @@
 
         <!-- Error Message -->
         <div th:if="${param.error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-triangle me-2"></i> Error al procesar la solicitud.
+            <i class="fas fa-exclamation-triangle me-2"></i> <span th:text="#{list.error}">Error processing the request.</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-            <h2 class="mb-0"><i class="fas fa-gamepad me-2"></i>Mi Colección</h2>
+            <h2 class="mb-0"><i class="fas fa-gamepad me-2"></i><span th:text="#{list.heading}">My Collection</span></h2>
             <div class="d-flex flex-wrap align-items-center gap-2">
                 <a href="/games/export" class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-file-export"></i> Exportar
+                    <i class="fas fa-file-export"></i> <span th:text="#{list.btn.export}">Export</span>
                 </a>
                 <form action="/games/import" method="post" enctype="multipart/form-data" class="d-flex align-items-center gap-2">
                     <input type="file" name="file" class="form-control form-control-sm" accept=".csv" required>
-                    <button type="submit" class="btn btn-outline-secondary btn-sm">Importar</button>
+                    <button type="submit" class="btn btn-outline-secondary btn-sm" th:text="#{list.btn.import}">Import</button>
                 </form>
                 <a href="/games/new" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Nuevo Juego
+                    <i class="fas fa-plus"></i> <span th:text="#{list.btn.newGame}">New Game</span>
                 </a>
             </div>
         </div>
@@ -75,19 +75,19 @@
                 <input type="hidden" name="sortBy" th:value="${sortBy}">
                 <input type="hidden" name="sortDir" th:value="${sortDir}">
                 <div class="col-md-3">
-                    <label class="form-label small text-muted">Estado</label>
+                    <label class="form-label small text-muted" th:text="#{list.filter.status}">Status</label>
                     <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">Todos los estados</option>
-                        <option value="Sin empezar" th:selected="${selectedStatus == 'Sin empezar'}">Sin empezar</option>
-                        <option value="Jugando" th:selected="${selectedStatus == 'Jugando'}">Jugando</option>
-                        <option value="Terminado" th:selected="${selectedStatus == 'Terminado'}">Terminado</option>
-                        <option value="Abandonado" th:selected="${selectedStatus == 'Abandonado'}">Abandonado</option>
+                        <option value="" th:text="#{list.filter.status.all}">All statuses</option>
+                        <option value="Not started" th:selected="${selectedStatus == 'Not started'}" th:text="#{status.notStarted}">Not started</option>
+                        <option value="Playing"     th:selected="${selectedStatus == 'Playing'}"     th:text="#{status.playing}">Playing</option>
+                        <option value="Completed"   th:selected="${selectedStatus == 'Completed'}"   th:text="#{status.completed}">Completed</option>
+                        <option value="Abandoned"   th:selected="${selectedStatus == 'Abandoned'}"   th:text="#{status.abandoned}">Abandoned</option>
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small text-muted">Género</label>
+                    <label class="form-label small text-muted" th:text="#{list.filter.genre}">Genre</label>
                     <select name="genreId" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">Todos los géneros</option>
+                        <option value="" th:text="#{list.filter.genre.all}">All genres</option>
                         <option th:each="genre : ${genres}"
                                 th:value="${genre.id}"
                                 th:text="${genre.name}"
@@ -96,9 +96,9 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label small text-muted">Plataforma</label>
+                    <label class="form-label small text-muted" th:text="#{list.filter.platform}">Platform</label>
                     <select name="platformId" class="form-select form-select-sm" onchange="this.form.submit()">
-                        <option value="">Todas las plataformas</option>
+                        <option value="" th:text="#{list.filter.platform.all}">All platforms</option>
                         <option th:each="platform : ${platforms}"
                                 th:value="${platform.id}"
                                 th:text="${platform.name}"
@@ -107,28 +107,29 @@
                     </select>
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
-                    <a href="/games" class="btn btn-outline-secondary btn-sm" title="Quitar filtros y orden por defecto">Limpiar filtros</a>
+                    <a href="/games" class="btn btn-outline-secondary btn-sm" th:text="#{list.filter.clear}">Clear filters</a>
                 </div>
             </form>
         </div>
 
         <div th:if="${ggDealsApiCalls != null && !ggDealsApiCalls.isEmpty()}" class="card border-secondary mb-4">
             <div class="card-header py-2 bg-secondary text-white">
-                <i class="fas fa-bug me-1"></i> Depuración GG.deals (última carga de precios)
+                <i class="fas fa-bug me-1"></i> <span th:text="#{list.debug.title}">GG.deals debug (last price load)</span>
             </div>
             <div class="card-body p-0">
                 <div th:each="call, iter : ${ggDealsApiCalls}" class="p-3" th:classappend="${!iter.last} ? ' border-bottom'">
                     <div>
-                        <div class="small text-muted mb-1">Llamada <span th:text="${iter.index + 1}">1</span></div>
+                        <div class="small text-muted mb-1"><span th:text="#{list.debug.call}">Call</span> <span th:text="${iter.index + 1}">1</span></div>
                         <div class="mb-2">
                             <span class="badge bg-dark" th:text="${call.method}">GET</span>
                             <span th:if="${call.httpStatus != null}" class="badge bg-info text-dark" th:text="|HTTP ${call.httpStatus}|">200</span>
                         </div>
-                        <div class="fw-semibold small mb-1">Petición</div>
+                        <div class="fw-semibold small mb-1" th:text="#{list.debug.request}">Request</div>
                         <pre class="bg-light border gg-deals-debug-pre p-2 mb-2" th:text="${call.requestUrlMasked}">URL</pre>
                         <div th:if="${call.errorMessage != null}" class="alert alert-danger small py-2 mb-2" th:text="${call.errorMessage}"></div>
-                        <div class="fw-semibold small mb-1">Respuesta</div>
-                        <pre class="bg-dark text-light gg-deals-debug-pre p-3 mb-0" th:text="${call.rawResponseBody != null ? call.rawResponseBody : '(sin cuerpo)'}"></pre>
+                        <div class="fw-semibold small mb-1" th:text="#{list.debug.response}">Response</div>
+                        <pre class="bg-dark text-light gg-deals-debug-pre p-3 mb-0"
+                             th:text="${call.rawResponseBody != null ? call.rawResponseBody : #messages.msg('list.debug.noBody')}"></pre>
                     </div>
                 </div>
             </div>
@@ -140,30 +141,30 @@
                 <thead class="table-light">
                     <tr>
                         <th style="width: 50px;">#</th>
-                        <th style="width: 80px;">Portada</th>
+                        <th style="width: 80px;" th:text="#{list.col.cover}">Cover</th>
                         <th>
                             <a th:href="@{/games(sortBy='title', sortDir=${sortBy == 'title' ? reverseSortDir : 'asc'}, status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform})}"
                                class="text-decoration-none text-dark d-flex align-items-center">
-                                Título
+                                <span th:text="#{list.col.title}">Title</span>
                                 <i th:if="${sortBy == 'title'}"
                                    th:class="${sortDir == 'asc' ? 'fas fa-sort-up ms-1' : 'fas fa-sort-down ms-1'}"></i>
                             </a>
                         </th>
-                        <th>Plataforma</th>
-                        <th>Género</th>
+                        <th th:text="#{list.col.platform}">Platform</th>
+                        <th th:text="#{list.col.genre}">Genre</th>
                         <th>
                             <a th:href="@{/games(sortBy='releaseYear', sortDir=${sortBy == 'releaseYear' ? reverseSortDir : 'desc'}, status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform})}"
                                class="text-decoration-none text-dark d-flex align-items-center">
-                                Año
+                                <span th:text="#{list.col.year}">Year</span>
                                 <i th:if="${sortBy == 'releaseYear'}"
                                    th:class="${sortDir == 'asc' ? 'fas fa-sort-up ms-1' : 'fas fa-sort-down ms-1'}"></i>
                             </a>
                         </th>
-                        <th>Estado</th>
+                        <th th:text="#{list.col.status}">Status</th>
                         <th>
                             <a th:href="@{/games(sortBy='rating', sortDir=${sortBy == 'rating' ? reverseSortDir : 'desc'}, status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform})}"
                                class="text-decoration-none text-dark d-flex align-items-center">
-                                Nota
+                                <span th:text="#{list.col.score}">Score</span>
                                 <i th:if="${sortBy == 'rating'}"
                                    th:class="${sortDir == 'asc' ? 'fas fa-sort-up ms-1' : 'fas fa-sort-down ms-1'}"></i>
                             </a>
@@ -193,14 +194,17 @@
                         <td th:text="${game.releaseYear}">1990</td>
                         <td>
                             <span class="badge d-inline-flex align-items-center gap-1"
-                                  th:classappend="${game.status == 'Terminado'  ? 'bg-success'  :
-                                                  (game.status == 'Jugando'    ? 'bg-primary'  :
-                                                  (game.status == 'Abandonado' ? 'bg-danger'   : 'bg-secondary'))}">
+                                  th:classappend="${game.status == 'Completed'  ? 'bg-success'  :
+                                                  (game.status == 'Playing'    ? 'bg-primary'  :
+                                                  (game.status == 'Abandoned' ? 'bg-danger'   : 'bg-secondary'))}">
                                 <i class="fas fa-xs"
-                                   th:classappend="${game.status == 'Terminado'  ? 'fa-check' :
-                                                   (game.status == 'Jugando'    ? 'fa-play'  :
-                                                   (game.status == 'Abandonado' ? 'fa-ban'   : 'fa-circle'))}"></i>
-                                <span th:text="${game.status}"></span>
+                                   th:classappend="${game.status == 'Completed'  ? 'fa-check' :
+                                                   (game.status == 'Playing'    ? 'fa-play'  :
+                                                   (game.status == 'Abandoned' ? 'fa-ban'   : 'fa-circle'))}"></i>
+                                <span th:text="${game.status == 'Not started' ? #messages.msg('status.notStarted') :
+                                               (game.status == 'Playing'      ? #messages.msg('status.playing')    :
+                                               (game.status == 'Completed'    ? #messages.msg('status.completed')  :
+                                               (game.status == 'Abandoned'    ? #messages.msg('status.abandoned')  : game.status)))}"></span>
                             </span>
                         </td>
                         <td>
@@ -213,7 +217,7 @@
                     <tr th:if="${#lists.isEmpty(games)}">
                         <td colspan="8" class="text-center py-4 text-muted">
                             <i class="fas fa-ghost fa-2x mb-2"></i>
-                            <p class="mb-0">No se encontraron juegos con los filtros actuales.</p>
+                            <p class="mb-0" th:text="#{list.empty}">No games found with the current filters.</p>
                         </td>
                     </tr>
                 </tbody>
@@ -221,7 +225,7 @@
         </div>
 
         <div class="mt-3 text-muted small text-end">
-            Mostrando <span th:text="${#lists.size(games)}">0</span> juegos
+            <span th:text="#{list.showing(${#lists.size(games)})}">Showing 0 games</span>
         </div>
     </div>
 

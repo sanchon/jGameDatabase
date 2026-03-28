@@ -1,6 +1,6 @@
 package xyz.sanchon.jgamedatabase.dto;
 
-/** Resultado de búsqueda en la tienda Steam (para JSON hacia el formulario de deseados). */
+/** Steam store search result (for JSON response to the wishlist form). */
 public class SteamSearchHitDto {
 
     private long appId;

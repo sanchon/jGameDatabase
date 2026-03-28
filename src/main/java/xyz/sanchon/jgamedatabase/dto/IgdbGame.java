@@ -120,7 +120,7 @@ public class IgdbGame {
         this.genres = genres;
     }
 
-    // Helper para Thymeleaf: nombres de plataformas unidos por coma
+    // Thymeleaf helper: platform names joined by comma
     public String getPlatformNamesJoined() {
         if (platforms == null || platforms.isEmpty()) return null;
         return platforms.stream()

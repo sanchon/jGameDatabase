@@ -1,12 +1,12 @@
 package xyz.sanchon.jgamedatabase.dto;
 
 /**
- * Registro de una llamada a la API de GG.deals para depuración en pantalla.
+ * Record of a GG.deals API call for on-screen debugging.
  */
 public class GgDealsApiCallLog {
 
     private final String method;
-    /** URL completa con la clave sustituida por &lt;oculto&gt; */
+    /** Full URL with the API key replaced by &lt;hidden&gt; */
     private final String requestUrlMasked;
     private final Integer httpStatus;
     private final String rawResponseBody;

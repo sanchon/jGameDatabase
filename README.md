@@ -1,210 +1,210 @@
 # jGameDatabase
 
-Aplicación web para **gestionar tu colección personal de videojuegos** y una **lista de deseados**, con búsqueda de títulos en **IGDB**, enlaces a **Metacritic**, precios a través de **GG.deals** (por Steam App ID), importación/exportación **CSV** y **notas en Markdown** en la página de detalle de cada juego.
+Web application to **manage your personal video game collection** and a **wishlist**, with title search on **IGDB**, links to **Metacritic**, prices via **GG.deals** (by Steam App ID), **CSV** import/export, and **Markdown notes** on each game's detail page.
 
 ---
 
-## Opciones de instalación
+## Installation options
 
-Elige la que mejor se adapte a tu caso:
+Choose the one that best fits your case:
 
-| Opción | Requiere | Ideal para |
-|--------|----------|------------|
-| [Ejecutable portable](#1-ejecutable-portable-recomendado-para-usuarios-finales) | Nada | Usar en tu PC sin instalar nada |
-| [Docker](#2-docker) | Docker | Servidores o quienes ya usen contenedores |
-| [Desde el código fuente](#3-desde-el-código-fuente-para-desarrolladores) | JDK 21 + Git | Desarrollo y personalización |
+| Option | Requires | Ideal for |
+|--------|----------|-----------|
+| [Portable executable](#1-portable-executable-recommended-for-end-users) | Nothing | Using on your PC without installing anything |
+| [Docker](#2-docker) | Docker | Servers or those already using containers |
+| [From source code](#3-from-source-code-for-developers) | JDK 21 + Git | Development and customization |
 
-### 1. Ejecutable portable (recomendado para usuarios finales)
+### 1. Portable executable (recommended for end users)
 
-Descarga el ZIP para tu sistema desde la página de [Releases](../../releases/latest), descomprímelo y ejecuta:
+Download the ZIP for your system from the [Releases](../../releases/latest) page, unzip it, and run:
 
-| Sistema | Ejecutable |
-|---------|-----------|
+| System | Executable |
+|--------|-----------|
 | Windows | `jGameDatabase\jGameDatabase.exe` |
 | Linux   | `jGameDatabase/bin/jGameDatabase` |
-| macOS   | `jGameDatabase.app` (doble clic) |
+| macOS   | `jGameDatabase.app` (double click) |
 
-**No es necesario tener Java instalado.** La JRE va incluida en el ZIP.
+**No need to have Java installed.** The JRE is included in the ZIP.
 
-Los datos se guardan en `~/.jgamedatabase/data/` (carpeta de usuario).
-Tras arrancar, abre **http://localhost:8080** en tu navegador.
+Data is stored in `~/.jgamedatabase/data/` (user folder).
+After starting, open **http://localhost:8080** in your browser.
 
 ### 2. Docker
 
-La forma más cómoda si ya tienes Docker. No necesitas clonar el repositorio.
+The most convenient option if you already have Docker. No need to clone the repository.
 
-**Con Docker Compose** (recomendado): crea un fichero `.env` con tus credenciales y ejecuta:
+**With Docker Compose** (recommended): create a `.env` file with your credentials and run:
 
 ```env
-IGDB_CLIENT_ID=tu_client_id
-IGDB_CLIENT_SECRET=tu_client_secret
-GGDEALS_API_KEY=tu_api_key
+IGDB_CLIENT_ID=your_client_id
+IGDB_CLIENT_SECRET=your_client_secret
+GGDEALS_API_KEY=your_api_key
 ```
 
 ```bash
 docker compose -f docker/docker-compose.yml up -d
 ```
 
-**O directamente con `docker run`:**
+**Or directly with `docker run`:**
 
 ```bash
 docker run -d \
   --name jgamedatabase \
   -p 8080:8080 \
   -v jgamedatabase-data:/app/data \
-  -e IGDB_CLIENT_ID="tu_client_id" \
-  -e IGDB_CLIENT_SECRET="tu_client_secret" \
-  -e GGDEALS_API_KEY="tu_api_key" \
+  -e IGDB_CLIENT_ID="your_client_id" \
+  -e IGDB_CLIENT_SECRET="your_client_secret" \
+  -e GGDEALS_API_KEY="your_api_key" \
   --restart unless-stopped \
   sanchon/jgamedatabase:latest
 ```
 
-Disponible en **http://localhost:8080**. Las credenciales también se pueden introducir desde la UI en `/configuration` tras el primer arranque.
+Available at **http://localhost:8080**. Credentials can also be entered from the UI at `/configuration` after the first startup.
 
-### 3. Desde el código fuente (para desarrolladores)
+### 3. From source code (for developers)
 
-Requiere **JDK 21** y **Git**.
+Requires **JDK 21** and **Git**.
 
 ```bash
-git clone <url-del-repositorio>
+git clone <repository-url>
 cd jGameDatabase
 ./gradlew bootRun          # Linux / macOS
 gradlew.bat bootRun        # Windows
 ```
 
-Disponible en **http://localhost:8080**. Consulta la sección [Configuración](#configuración) para añadir las credenciales de API.
+Available at **http://localhost:8080**. See the [Configuration](#configuration) section to add API credentials.
 
 ---
 
-## Funcionalidades
+## Features
 
-| Área | Descripción |
+| Area | Description |
 |------|-------------|
-| **Inicio** | Punto de entrada a la aplicación con accesos directos a colección, deseados y añadir juego. |
-| **Mi colección** | Listado de juegos poseídos: filtros por estado, género y plataforma (se aplican al cambiar el desplegable), ordenación por título, año o nota. El título es un enlace directo a la página de detalle. |
-| **Deseados** | Lista de juegos deseados; búsqueda de precios en GG.deals bajo demanda. |
-| **Añadir juego** | Búsqueda en IGDB y formulario de alta. El desplegable de plataformas se rellena automáticamente con las plataformas que IGDB reporta para ese juego; si alguna no existe en la base de datos local, se crea al cargar el formulario. En deseados, búsqueda adicional en la **tienda Steam** para guardar el **Steam App ID** (necesario para precios). |
-| **Detalle** | Vista `/games/detail/{id}`: portada, metadatos, enlaces a IGDB / Metacritic; **notas en Markdown** con edición integrada y vista renderizada. El **estado se puede cambiar directamente** desde el detalle sin salir de la página. Incluye botón de eliminar con confirmación. |
-| **Estados de juego** | Estados canónicos: *Sin empezar*, *Jugando*, *Terminado*, *Abandonado*. Cada estado tiene color e icono propios en las listas y el detalle. La migración automática al arrancar convierte cualquier texto legacy (p. ej. `Completado`, `Playing`, `Backlog`) al estado canónico correspondiente. |
-| **Configuración** | Accesible desde la barra de navegación en todas las páginas (`/configuration`). Gestiona credenciales de **IGDB** y **GG.deals**. Incluye opción para **reiniciar la base de datos** y para **activar/desactivar la consola H2** (muestra el enlace y credenciales cuando está activa). |
-| **Backups CSV** | Genera un CSV en el servidor (`/app/backups` en Docker, `~/.jgamedatabase/backups` en portable, `./backups` en dev) desde `/configuration`, con nombre timestamped. Distinto a la exportación al navegador. |
-| **CSV** | Exportar e importar **todos** los juegos (colección y deseados) desde la vista de colección. Los campos exportados/importados incluyen: `id`, `titulo`, `año`, `plataforma`, `genero`, `estado`, `rating`, `igdb_id`, `steam_app_id`, `igdb_slug`, `portada_url`, `notas` y `wishlist`. Al importar, las plataformas y géneros que no existan en la base de datos se crean automáticamente. |
+| **Home** | Application entry point with shortcuts to collection, wishlist, and add game. |
+| **My Collection** | List of owned games: filters by status, genre, and platform (applied when changing the dropdown), sortable by title, year, or rating. The title is a direct link to the detail page. |
+| **Wishlist** | List of desired games; on-demand price search on GG.deals. |
+| **Add game** | Search on IGDB and entry form. The platforms dropdown is automatically populated with the platforms IGDB reports for that game; if any does not exist in the local database, it is created when loading the form. For wishlist items, an additional search on the **Steam store** to save the **Steam App ID** (required for prices). |
+| **Detail** | View `/games/detail/{id}`: cover, metadata, links to IGDB / Metacritic; **Markdown notes** with inline editing and rendered view. **Status can be changed directly** from the detail page without leaving it. Includes delete button with confirmation. |
+| **Game statuses** | Canonical statuses: *Not started*, *Playing*, *Completed*, *Abandoned*. Each status has its own color and icon in the lists and detail. The automatic migration on startup converts any legacy text (e.g. `Completado`, `Playing`, `Backlog`) to the corresponding canonical status. |
+| **Configuration** | Accessible from the navigation bar on all pages (`/configuration`). Manages **IGDB** and **GG.deals** credentials. Includes option to **reset the database** and to **enable/disable the H2 console** (shows the link and credentials when active). |
+| **CSV Backups** | Generates a CSV on the server (`/app/backups` in Docker, `~/.jgamedatabase/backups` in portable, `./backups` in dev) from `/configuration`, with a timestamped name. Different from browser export. |
+| **CSV** | Export and import **all** games (collection and wishlist) from the collection view. Exported/imported fields include: `id`, `titulo`, `año`, `plataforma`, `genero`, `estado`, `rating`, `igdb_id`, `steam_app_id`, `igdb_slug`, `portada_url`, `notas`, and `wishlist`. On import, platforms and genres that do not exist in the database are created automatically. |
 
-Las credenciales de APIs externas se pueden configurar mediante `application-local.properties`, variables de entorno, o directamente desde la UI en la página de [Configuración](#configuración).
-
----
-
-## Requisitos
-
-- **JDK 21** (recomendado; el proyecto declara toolchain Java 21 en Gradle).
-- **Git** (opcional, para clonar el repositorio).
-- Conexión a Internet para IGDB, GG.deals y la API pública de búsqueda de Steam.
+External API credentials can be configured via `application-local.properties`, environment variables, or directly from the UI on the [Configuration](#configuration) page.
 
 ---
 
-## Configuración
+## Requirements
 
-### Credenciales de APIs externas
+- **JDK 21** (recommended; the project declares a Java 21 toolchain in Gradle).
+- **Git** (optional, to clone the repository).
+- Internet connection for IGDB, GG.deals, and the public Steam search API.
 
-Hay tres formas de configurar las credenciales, en orden de precedencia:
+---
 
-1. **Página de Configuración** (`/configuration`): la propia aplicación permite introducirlas desde la UI y las persiste en la base de datos. Es la opción más cómoda, especialmente en Docker.
-2. **`application-local.properties`**: fichero ignorado por Git, recomendado para desarrollo local.
-3. **Variables de entorno**: útil para CI/CD o contenedores cuando no se quiere tocar ficheros.
+## Configuration
 
-### Perfil `local` y secretos
+### External API credentials
 
-Por defecto, `application.properties` activa `spring.profiles.active=local`. El fichero `src/main/resources/application-local.properties` está pensado para **credenciales locales** y está **ignorado por Git** (véase `.gitignore`).
+There are three ways to configure credentials, in order of precedence:
 
-1. Copia el ejemplo o crea `application-local.properties` en `src/main/resources/`.
-2. Define al menos:
+1. **Configuration page** (`/configuration`): the application itself allows entering them from the UI and persists them in the database. This is the most convenient option, especially in Docker.
+2. **`application-local.properties`**: file ignored by Git, recommended for local development.
+3. **Environment variables**: useful for CI/CD or containers when you don't want to touch files.
+
+### `local` profile and secrets
+
+By default, `application.properties` activates `spring.profiles.active=local`. The file `src/main/resources/application-local.properties` is intended for **local credentials** and is **ignored by Git** (see `.gitignore`).
+
+1. Copy the example or create `application-local.properties` in `src/main/resources/`.
+2. Define at least:
 
 ```properties
-# IGDB (credenciales de la aplicación en Twitch Developer Console)
-igdb.client-id=TU_CLIENT_ID
-igdb.client-secret=TU_CLIENT_SECRET
+# IGDB (application credentials from the Twitch Developer Console)
+igdb.client-id=YOUR_CLIENT_ID
+igdb.client-secret=YOUR_CLIENT_SECRET
 
-# GG.deals (clave en tu cuenta / ajustes de API)
-ggdeals.api-key=TU_API_KEY
+# GG.deals (key from your account / API settings)
+ggdeals.api-key=YOUR_API_KEY
 
-# Opcional: región de precios (p. ej. es, eu, us, gb…)
+# Optional: price region (e.g. es, eu, us, gb…)
 ggdeals.region=es
 ```
 
-### Variables de entorno (alternativa)
+### Environment variables (alternative)
 
-Puedes omitir `application-local.properties` y exportar:
+You can skip `application-local.properties` and export:
 
 - `IGDB_CLIENT_ID`, `IGDB_CLIENT_SECRET`
 - `GGDEALS_API_KEY`
-- `GGDEALS_REGION` (opcional; por defecto `es` en `application.properties`)
+- `GGDEALS_REGION` (optional; defaults to `es` in `application.properties`)
 
-### Base de datos
+### Database
 
-La aplicación usa **H2 en modo archivo**. El fichero se almacena en rutas distintas según el entorno:
+The application uses **H2 in file mode**. The file is stored in different paths depending on the environment:
 
-| Entorno | Perfil Spring | Ruta del fichero H2 |
-|---------|--------------|---------------------|
-| Local (Gradle / IntelliJ) | `local` | `./data/jgamedatabase` (relativo al directorio de trabajo) |
-| Docker | `prod` | `/app/data/jgamedatabase` (dentro del volumen del contenedor) |
+| Environment | Spring profile | H2 file path |
+|-------------|---------------|--------------|
+| Local (Gradle / IntelliJ) | `local` | `./data/jgamedatabase` (relative to working directory) |
+| Docker | `prod` | `/app/data/jgamedatabase` (inside the container volume) |
 
-Cada entorno accede a su propio fichero independiente, sin conflictos de bloqueo entre la instancia local y la de Docker. El directorio `data/` está ignorado en Git. La primera ejecución crea los ficheros.
+Each environment accesses its own independent file, with no locking conflicts between the local and Docker instances. The `data/` directory is ignored in Git. The first run creates the files.
 
-> **Datos de muestra**: si la base de datos está vacía al arrancar, la aplicación inserta automáticamente 3 juegos de ejemplo (Zelda: Breath of the Wild, Elden Ring, Hollow Knight) junto con 4 plataformas (PlayStation 5, Xbox Series X, Nintendo Switch, PC) y 4 géneros (RPG, Action, Adventure, Platformer).
+> **Sample data**: if the database is empty on startup, the application automatically inserts 3 sample games (Zelda: Breath of the Wild, Elden Ring, Hollow Knight) along with 4 platforms (PlayStation 5, Xbox Series X, Nintendo Switch, PC) and 4 genres (RPG, Action, Adventure, Platformer).
 
-### Backups CSV
+### CSV Backups
 
-La página de Configuración permite generar backups CSV en el servidor. La ruta varía según el entorno:
+The Configuration page allows generating CSV backups on the server. The path varies by environment:
 
-| Entorno | Ruta de backups |
-|---------|----------------|
+| Environment | Backup path |
+|-------------|-------------|
 | Local (Gradle) | `./backups/` |
 | Portable | `~/.jgamedatabase/backups/` |
-| Docker | `/app/backups/` (mapeado al volumen `../backups` del host) |
+| Docker | `/app/backups/` (mapped to the host volume `../backups`) |
 
-Los ficheros se nombran `backup_YYYYMMDD_HHmmss.csv`. Son independientes de la exportación al navegador y sirven como copia de seguridad en el servidor.
+Files are named `backup_YYYYMMDD_HHmmss.csv`. They are independent of the browser export and serve as server-side backups.
 
-### Consola H2
+### H2 Console
 
-La consola H2 se activa y desactiva desde la página de **Configuración** sin necesidad de reiniciar. Cuando está activa, la propia página muestra el enlace y las credenciales:
+The H2 console can be enabled and disabled from the **Configuration** page without needing to restart. When active, the page itself shows the link and credentials:
 
-| Campo | Valor |
+| Field | Value |
 |-------|-------|
 | JDBC URL | `jdbc:h2:file:./data/jgamedatabase` (local) / `jdbc:h2:file:/app/data/jgamedatabase` (Docker) |
-| Usuario | `sa` |
-| Contraseña | `password` |
+| User | `sa` |
+| Password | `password` |
 
-### Conexión desde IntelliJ Database plugin (u otro cliente externo)
+### Connecting from IntelliJ Database plugin (or another external client)
 
-H2 en modo archivo solo admite una JVM a la vez. Para inspeccionar la base de datos tienes dos opciones:
+H2 in file mode only allows one JVM at a time. To inspect the database you have two options:
 
-**Opción A — Con la app en marcha:** usa la consola web integrada en **http://localhost:8080/h2-console** (ver sección anterior).
+**Option A — With the app running:** use the built-in web console at **http://localhost:8080/h2-console** (see previous section).
 
-**Opción B — Con la app parada:** conéctate desde IntelliJ con ruta absoluta:
+**Option B — With the app stopped:** connect from IntelliJ with the absolute path:
 
-| Campo | Valor |
+| Field | Value |
 |-------|-------|
 | Driver | H2 |
-| URL | `jdbc:h2:file:C:/Users/<tu_usuario>/IdeaProjects/jGameDatabase/data/jgamedatabase` |
-| Usuario | `sa` |
-| Contraseña | `password` |
+| URL | `jdbc:h2:file:C:/Users/<your_user>/IdeaProjects/jGameDatabase/data/jgamedatabase` |
+| User | `sa` |
+| Password | `password` |
 
 ---
 
-## Instalación y arranque
+## Installation and startup
 
-### Clonar o copiar el proyecto
+### Clone or copy the project
 
 ```bash
-git clone <url-del-repositorio>
+git clone <repository-url>
 cd jGameDatabase
 ```
 
-### Crear configuración local
+### Create local configuration
 
-Crea `src/main/resources/application-local.properties` con tus claves (sección anterior).
+Create `src/main/resources/application-local.properties` with your keys (see previous section).
 
-### Ejecutar con Gradle (recomendado)
+### Run with Gradle (recommended)
 
 **Linux / macOS:**
 
@@ -212,130 +212,130 @@ Crea `src/main/resources/application-local.properties` con tus claves (sección 
 ./gradlew bootRun
 ```
 
-**Windows (PowerShell o CMD):**
+**Windows (PowerShell or CMD):**
 
 ```bat
 gradlew.bat bootRun
 ```
 
-La aplicación queda disponible en **http://localhost:8080**.
+The application is available at **http://localhost:8080**.
 
-### Compilar sin arrancar
+### Build without running
 
 ```bash
 ./gradlew build
 ```
 
-El JAR ejecutable queda en `build/libs/` (nombre con versión del proyecto).
+The executable JAR is placed in `build/libs/` (name includes the project version).
 
-### Ejecutar el JAR
+### Run the JAR
 
 ```bash
 java -jar build/libs/jGameDatabase-1.1.3.jar
 ```
 
-(Ajusta el nombre del fichero si la versión cambia.)
+(Adjust the filename if the version changes.)
 
 ---
 
-## Desarrollo
+## Development
 
-- **Hot reload**: Spring DevTools está incluido como dependencia de desarrollo; recarga al cambiar código según configuración del IDE.
-- **Gradle JVM**: si el IDE falla al sincronizar Gradle, asigna explícitamente **JDK 21** como JVM de Gradle.
-- **Inspección de H2**: mientras la app está corriendo usa la consola web (`/h2-console`); si la app está parada puedes abrir el fichero directamente desde IntelliJ (ver sección [Conexión desde IntelliJ](#conexión-desde-intellij-database-plugin-u-otro-cliente-externo)).
+- **Hot reload**: Spring DevTools is included as a development dependency; it reloads on code changes according to IDE configuration.
+- **Gradle JVM**: if the IDE fails to sync Gradle, explicitly assign **JDK 21** as the Gradle JVM.
+- **H2 inspection**: while the app is running use the web console (`/h2-console`); if the app is stopped you can open the file directly from IntelliJ (see [Connecting from IntelliJ](#connecting-from-intellij-database-plugin-or-another-external-client) section).
 
 ---
 
-## Docker y Docker Hub
+## Docker and Docker Hub
 
-Los ficheros Docker están en el directorio **`docker/`**:
+Docker files are in the **`docker/`** directory:
 
-| Fichero | Descripción |
-|---------|-------------|
-| `docker/Dockerfile` | Build multi-etapa (JDK 21 → JRE, usuario no root, volumen para H2) |
-| `docker/docker-compose.yml` | Composición lista para producción |
-| `.dockerignore` | En el root (el contexto de build es siempre el root del proyecto) |
+| File | Description |
+|------|-------------|
+| `docker/Dockerfile` | Multi-stage build (JDK 21 → JRE, non-root user, volume for H2) |
+| `docker/docker-compose.yml` | Production-ready composition |
+| `.dockerignore` | In the root (the build context is always the project root) |
 
-### Publicación automática con GitHub Actions
+### Automatic publishing with GitHub Actions
 
-El workflow [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) construye la imagen y la sube a **Docker Hub** cuando:
+The workflow [`.github/workflows/docker-publish.yml`](.github/workflows/docker-publish.yml) builds the image and pushes it to **Docker Hub** when:
 
-- se publica un **tag** semántico `v*` (p. ej. `v1.2.0`), o
-- se lanza manualmente desde la pestaña **Actions** → **Publish Docker image** → **Run workflow**.
+- a semantic **tag** `v*` is published (e.g. `v1.2.0`), or
+- triggered manually from the **Actions** tab → **Publish Docker image** → **Run workflow**.
 
-**Secretos del repositorio** (en GitHub: *Settings → Secrets and variables → Actions*):
+**Repository secrets** (on GitHub: *Settings → Secrets and variables → Actions*):
 
-| Secreto | Descripción |
-|---------|-------------|
-| `DOCKERHUB_USERNAME` | Tu usuario de Docker Hub |
-| `DOCKERHUB_TOKEN` | [Access Token](https://docs.docker.com/security/for-developers/access-tokens/) de Docker Hub (recomendado; no uses la contraseña principal si puedes evitarlo) |
+| Secret | Description |
+|--------|-------------|
+| `DOCKERHUB_USERNAME` | Your Docker Hub username |
+| `DOCKERHUB_TOKEN` | Docker Hub [Access Token](https://docs.docker.com/security/for-developers/access-tokens/) (recommended; avoid using your main password if possible) |
 
-La imagen se publica como **`<usuario>/jgamedatabase`** con etiquetas:
+The image is published as **`<username>/jgamedatabase`** with tags:
 
-- `latest` (solo en la rama por defecto del repositorio),
-- versión tipo `1.2.0` al empujar un tag `v1.2.0`,
-- `sha-<corto>` con el commit.
+- `latest` (only on the repository's default branch),
+- version like `1.2.0` when pushing a tag `v1.2.0`,
+- `sha-<short>` with the commit.
 
-Tras el primer push correcto, en Docker Hub aparecerá el repositorio de imagen correspondiente.
+After the first successful push, the corresponding image repository will appear on Docker Hub.
 
-### Construcción y subida manual (opcional)
+### Manual build and push (optional)
 
-Si prefieres no usar CI:
+If you prefer not to use CI:
 
 ```bash
 docker login
-docker build -f docker/Dockerfile -t <tu_usuario>/jgamedatabase:latest .
-docker push <tu_usuario>/jgamedatabase:latest
+docker build -f docker/Dockerfile -t <your_username>/jgamedatabase:latest .
+docker push <your_username>/jgamedatabase:latest
 ```
 
-### Ejecutar con Docker Compose (recomendado)
+### Run with Docker Compose (recommended)
 
-El fichero `docker/docker-compose.yml` usa la imagen publicada en Docker Hub y monta el volumen de datos en `./data` (relativo al root del proyecto). Crea un fichero `.env` en el root con las credenciales:
+The `docker/docker-compose.yml` file uses the image published on Docker Hub and mounts the data volume at `./data` (relative to the project root). Create a `.env` file in the root with the credentials:
 
 ```env
-IGDB_CLIENT_ID=tu_client_id
-IGDB_CLIENT_SECRET=tu_client_secret
-GGDEALS_API_KEY=tu_api_key
+IGDB_CLIENT_ID=your_client_id
+IGDB_CLIENT_SECRET=your_client_secret
+GGDEALS_API_KEY=your_api_key
 ```
 
-Y luego:
+And then:
 
 ```bash
 docker compose -f docker/docker-compose.yml up -d
 ```
 
-Para detenerlo:
+To stop it:
 
 ```bash
 docker compose -f docker/docker-compose.yml down
 ```
 
-### Ejecutar el contenedor directamente (alternativa)
+### Run the container directly (alternative)
 
-Cualquier usuario con Docker instalado (o en tu servidor Linux de producción) puede ejecutar la aplicación siguiendo estos pasos:
+Any user with Docker installed (or on your Linux production server) can run the application with these steps:
 
 ```bash
 docker run -d \
   --name jgamedatabase \
   -p 8080:8080 \
   -v jgamedatabase-data:/app/data \
-  -e IGDB_CLIENT_ID="tu_client_id_aqui" \
-  -e IGDB_CLIENT_SECRET="tu_client_secret_aqui" \
-  -e GGDEALS_API_KEY="tu_api_key_aqui" \
+  -e IGDB_CLIENT_ID="your_client_id_here" \
+  -e IGDB_CLIENT_SECRET="your_client_secret_here" \
+  -e GGDEALS_API_KEY="your_api_key_here" \
   --restart unless-stopped \
-  <tu_usuario_docker>/jgamedatabase:latest
+  <your_docker_username>/jgamedatabase:latest
 ```
 
-**Explicación de los parámetros principales:**
-- `-d`: Ejecuta el contenedor en segundo plano (detached mode).
-- `-p 8080:8080`: Mapea el puerto 8080 del servidor al puerto 8080 del contenedor. La aplicación será accesible en `http://localhost:8080` (o la IP del servidor).
-- `-v jgamedatabase-data:/app/data`: Crea un **volumen persistente**. Esto es crítico para que la base de datos H2 no se borre si el contenedor se apaga o actualiza.
-  > **Nota:** con `docker run` los backups CSV no quedan montados fuera del contenedor. Usa `docker-compose.yml` para tener el volumen `backups` persistido en el host.
-- `-e ...`: Variables de entorno necesarias para las integraciones de IGDB y GG.deals. Reemplaza con tus propias credenciales.
-- `--restart unless-stopped`: Asegura que el contenedor arranque automáticamente si el servidor se reinicia o Docker se reinicia.
+**Main parameters explained:**
+- `-d`: Runs the container in the background (detached mode).
+- `-p 8080:8080`: Maps port 8080 of the server to port 8080 of the container. The application will be accessible at `http://localhost:8080` (or the server's IP).
+- `-v jgamedatabase-data:/app/data`: Creates a **persistent volume**. This is critical to prevent the H2 database from being deleted if the container shuts down or is updated.
+  > **Note:** with `docker run`, CSV backups are not mounted outside the container. Use `docker-compose.yml` to have the `backups` volume persisted on the host.
+- `-e ...`: Environment variables required for IGDB and GG.deals integrations. Replace with your own credentials.
+- `--restart unless-stopped`: Ensures the container starts automatically if the server restarts or Docker restarts.
 
-**Ver los logs (opcional):**
-Si quieres comprobar que la aplicación ha arrancado correctamente, puedes ver los registros con:
+**View logs (optional):**
+If you want to verify the application has started correctly, you can view the logs with:
 ```bash
 docker logs -f jgamedatabase
 ```

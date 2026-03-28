@@ -24,11 +24,11 @@ public class Game {
     private Long igdbId;
     private String coverUrl;
 
-    /** Campo legacy: texto del estado antes de la migración a game_statuses. Se conserva para compatibilidad con
-     *  esquemas antiguos y se elimina (null) tras la migración automática. */
+    /** Legacy field: status text before migration to game_statuses. Kept for compatibility with
+     *  old schemas and cleared (null) after the automatic migration. */
     private String status;
 
-    /** Estado normalizado como FK. Tiene prioridad sobre el campo legacy {@code status}. */
+    /** Normalised status as FK. Takes priority over the legacy field {@code status}. */
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "status_id")
     private GameStatus gameStatus;
@@ -39,7 +39,7 @@ public class Game {
     private String notes;
     private String igdbSlug;
 
-    /** Steam App ID (para precios vía GG.deals). Opcional. */
+    /** Steam App ID (for prices via GG.deals). Optional. */
     private Long steamAppId;
 
     // New field to differentiate between possessed and wishlist games
@@ -106,12 +106,12 @@ public class Game {
         this.coverUrl = coverUrl;
     }
 
-    /** Devuelve el nombre del estado. Prioriza la FK normalizada; cae al texto legacy si aún no se ha migrado. */
+    /** Returns the status name. Prioritises the normalised FK; falls back to legacy text if not yet migrated. */
     public String getStatus() {
         return gameStatus != null ? gameStatus.getName() : status;
     }
 
-    /** Escribe el campo legacy. Usado por {@code @ModelAttribute} y durante la migración. */
+    /** Writes the legacy field. Used by {@code @ModelAttribute} and during migration. */
     public void setStatus(String status) {
         this.status = status;
     }
@@ -165,19 +165,19 @@ public class Game {
     }
 
     /**
-     * Genera un slug compatible con Metacritic siguiendo sus reglas:
-     * - Todo en minúsculas.
-     * - Signos de puntuación y espacios reemplazados por guiones.
-     * - Eliminación de caracteres especiales.
+     * Generates a Metacritic-compatible slug following their rules:
+     * - All lowercase.
+     * - Punctuation and spaces replaced with hyphens.
+     * - Special characters removed.
      */
     public String getMetacriticSlug() {
         String base = (igdbSlug != null && !igdbSlug.isEmpty()) ? igdbSlug : title;
         if (base == null) return "";
 
         return base.toLowerCase()
-                .replaceAll("[^a-z0-9\\s]", "-") // Puntuación y especiales a guiones
-                .replaceAll("\\s+", "-")         // Espacios a guiones
-                .replaceAll("-+", "-")          // Colapsar guiones múltiples
-                .replaceAll("^-|-$", "");       // Quitar guiones al principio o final
+                .replaceAll("[^a-z0-9\\s]", "-") // Punctuation and special chars to hyphens
+                .replaceAll("\\s+", "-")         // Spaces to hyphens
+                .replaceAll("-+", "-")          // Collapse multiple hyphens
+                .replaceAll("^-|-$", "");       // Strip leading or trailing hyphens
     }
 }

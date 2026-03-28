@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Juego - jGameDatabase</title>
+    <title th:text="#{edit.title}">Edit Game - jGameDatabase</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -25,7 +25,7 @@
             <div class="col-lg-8">
                 <div class="card shadow">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h2 class="h4 mb-0"><i class="fas fa-edit me-2"></i>Editar Juego</h2>
+                        <h2 class="h4 mb-0"><i class="fas fa-edit me-2"></i><span th:text="#{edit.heading}">Edit Game</span></h2>
                     </div>
                     <div class="card-body p-4">
                         <form th:action="@{/games/update/{id}(id=${game.id})}" th:object="${game}" method="post">
@@ -37,35 +37,39 @@
                             </div>
 
                             <div class="mb-3" th:if="${!game.wishlist}">
-                                <label for="status" class="form-label">Estado</label>
+                                <label for="status" class="form-label" th:text="#{edit.field.status}">Status</label>
                                 <select class="form-select" id="status" th:field="*{status}">
-                                    <option value="Sin empezar">Sin empezar</option>
-                                    <option value="Jugando">Jugando</option>
-                                    <option value="Terminado">Terminado</option>
-                                    <option value="Abandonado">Abandonado</option>
+                                    <option value="Not started" th:text="#{status.notStarted}">Not started</option>
+                                    <option value="Playing"     th:text="#{status.playing}">Playing</option>
+                                    <option value="Completed"   th:text="#{status.completed}">Completed</option>
+                                    <option value="Abandoned"   th:text="#{status.abandoned}">Abandoned</option>
                                 </select>
                             </div>
 
                             <div class="mb-3">
-                                <label for="rating" class="form-label">Valoración (0-100)</label>
+                                <label for="rating" class="form-label" th:text="#{edit.field.rating}">Rating (0-100)</label>
                                 <input type="number" class="form-control" id="rating" th:field="*{rating}" step="0.1" min="0" max="100">
                             </div>
 
                             <div class="mb-3">
-                                <label for="steamAppId" class="form-label">Steam App ID</label>
-                                <input type="number" class="form-control" id="steamAppId" th:field="*{steamAppId}" min="1" placeholder="Opcional (precios GG.deals)">
+                                <label for="steamAppId" class="form-label" th:text="#{edit.field.steamAppId}">Steam App ID</label>
+                                <input type="number" class="form-control" id="steamAppId" th:field="*{steamAppId}" min="1"
+                                       th:placeholder="#{edit.field.steamAppId.hint}">
                             </div>
 
                             <div class="mb-4">
-                                <label for="notes" class="form-label">Notas</label>
+                                <label for="notes" class="form-label" th:text="#{edit.field.notes}">Notes</label>
                                 <textarea class="form-control" id="notes" th:field="*{notes}" rows="5"></textarea>
-                                <div class="form-text">Formato Markdown. La vista renderizada y un editor más amplio están en la <a th:href="@{/games/detail/{id}(id=${game.id})}">página de detalle</a>.</div>
+                                <div class="form-text">
+                                    <span th:text="#{edit.field.notes.hint}">Markdown format.</span>
+                                    <a th:href="@{/games/detail/{id}(id=${game.id})}">detail page</a>.
+                                </div>
                             </div>
 
                             <div class="d-flex justify-content-end gap-2">
-                                <a th:href="${game.wishlist ? '/games/wishlist' : '/games'}" class="btn btn-secondary">Cancelar</a>
+                                <a th:href="${game.wishlist ? '/games/wishlist' : '/games'}" class="btn btn-secondary" th:text="#{edit.btn.cancel}">Cancel</a>
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save me-1"></i> Guardar Cambios
+                                    <i class="fas fa-save me-1"></i> <span th:text="#{edit.btn.save}">Save Changes</span>
                                 </button>
                             </div>
                         </form>

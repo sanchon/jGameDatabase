@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nuevo Juego - jGameDatabase</title>
+    <title th:text="#{create.title}">New Game - jGameDatabase</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -32,6 +32,17 @@
 
     <div th:replace="~{fragments/navbar :: navbar}"></div>
 
+    <!-- i18n strings for JS -->
+    <div id="jsStrings" style="display:none;"
+         th:data-image-error="#{create.js.imageError}"
+         th:data-min-chars="#{create.js.minChars}"
+         th:data-searching="#{create.js.searching}"
+         th:data-no-results="#{create.js.noResults}"
+         th:data-results="#{create.js.results}"
+         th:data-selected="#{create.js.selected}"
+         th:data-steam-error="#{create.js.steamError}">
+    </div>
+
     <div class="container py-4">
         <div class="row justify-content-center">
             <div class="col-lg-8">
@@ -39,7 +50,7 @@
                     <div class="card-header bg-primary text-white">
                         <h2 class="h4 mb-0">
                             <i th:class="${wishlist ? 'fas fa-heart me-2' : 'fas fa-gamepad me-2'}"></i>
-                            <span th:text="${wishlist ? 'Añadir a Deseados' : 'Añadir a Colección'}">Añadir Nuevo Juego</span>
+                            <span th:text="${wishlist ? #messages.msg('create.heading.wishlist') : #messages.msg('create.heading.collection')}">Add New Game</span>
                         </h2>
                     </div>
                     <div class="card-body p-4">
@@ -49,64 +60,64 @@
                             <input type="hidden" name="wishlist" th:value="${wishlist}">
 
                             <div class="mb-3">
-                                <label for="title" class="form-label">Título <span class="text-danger">*</span></label>
+                                <label for="title" class="form-label"><span th:text="#{create.field.title}">Title</span> <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="title" th:field="*{title}" required>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="releaseYear" class="form-label">Año de Lanzamiento</label>
+                                    <label for="releaseYear" class="form-label" th:text="#{create.field.releaseYear}">Release Year</label>
                                     <input type="number" class="form-control" id="releaseYear" th:field="*{releaseYear}" min="1950" max="2100">
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="rating" class="form-label">Valoración (0-100)</label>
+                                    <label for="rating" class="form-label" th:text="#{create.field.rating}">Rating (0-100)</label>
                                     <input type="number" class="form-control" id="rating" th:field="*{rating}" step="0.1" min="0" max="100">
                                 </div>
                             </div>
 
-                            <!-- Deseados: búsqueda en la tienda Steam (IGDB casi nunca trae el id) -->
+                            <!-- Wishlist: Steam store search (IGDB almost never returns the app id) -->
                             <div class="mb-4 border rounded p-3 bg-light" th:if="${wishlist}" id="wishlistSteamBlock">
-                                <h3 class="h6 text-primary mb-2"><i class="fab fa-steam me-1"></i> Enlazar con Steam</h3>
-                                <p class="small text-muted mb-3">
-                                    Busca el juego en la tienda Steam y elige el resultado correcto para guardar el <strong>Steam App ID</strong> (necesario para consultar precios en GG.deals).
+                                <h3 class="h6 text-primary mb-2"><i class="fab fa-steam me-1"></i> <span th:text="#{create.field.steamLink.heading}">Link with Steam</span></h3>
+                                <p class="small text-muted mb-3" th:text="#{create.field.steamLink.desc}">
+                                    Search for the game in the Steam store and choose the correct result to save the Steam App ID.
                                 </p>
-                                <label for="steamSearchQuery" class="form-label">Buscar en Steam</label>
+                                <label for="steamSearchQuery" class="form-label" th:text="#{create.field.steamLink.label}">Search on Steam</label>
                                 <div class="input-group mb-2">
                                     <input type="text" class="form-control" id="steamSearchQuery" maxlength="120"
                                            th:value="${game.title}"
-                                           placeholder="Nombre del juego en Steam…" autocomplete="off">
+                                           th:placeholder="#{create.field.steamLink.placeholder}" autocomplete="off">
                                     <button type="button" class="btn btn-outline-primary" id="steamSearchBtn">
-                                        <i class="fas fa-search"></i> Buscar
+                                        <i class="fas fa-search"></i> <span th:text="#{create.field.steamLink.btn}">Search</span>
                                     </button>
                                 </div>
                                 <div id="steamSearchStatus" class="small text-muted mb-2" style="display:none;"></div>
                                 <div id="steamSearchResults" class="list-group list-group-flush border rounded mb-3" style="display:none;"></div>
-                                <label for="steamAppId" class="form-label">Steam App ID seleccionado</label>
+                                <label for="steamAppId" class="form-label" th:text="#{create.field.steamAppId.label}">Selected Steam App ID</label>
                                 <input type="number" class="form-control" id="steamAppId" th:field="*{steamAppId}" min="1"
-                                       placeholder="Se rellena al elegir un resultado arriba, o introdúcelo a mano">
-                                <div class="form-text">Puedes pegar el número de la URL de la tienda: <code>store.steampowered.com/app/<strong>12345</strong>/…</code></div>
+                                       placeholder="Filled when you pick a result above, or enter manually">
+                                <div class="form-text" th:text="#{create.field.steamAppId.hint}">You can paste the number from the store URL.</div>
                             </div>
 
                             <div class="mb-3" th:if="${!wishlist}">
-                                <label for="steamAppIdCollection" class="form-label">Steam App ID</label>
-                                <input type="number" class="form-control" id="steamAppIdCollection" th:field="*{steamAppId}" min="1" placeholder="Opcional">
-                                <div class="form-text">Para precios en GG.deals. Si vienes desde IGDB y el juego está en Steam, se intenta rellenar automáticamente.</div>
+                                <label for="steamAppIdCollection" class="form-label" th:text="#{create.field.steamAppIdCollection.label}">Steam App ID</label>
+                                <input type="number" class="form-control" id="steamAppIdCollection" th:field="*{steamAppId}" min="1" placeholder="Optional">
+                                <div class="form-text" th:text="#{create.field.steamAppIdCollection.hint}">For prices on GG.deals.</div>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <label for="platform" class="form-label">Plataforma</label>
+                                    <label for="platform" class="form-label" th:text="#{create.field.platform}">Platform</label>
                                     <select class="form-select" id="platform" th:field="*{platform}">
-                                        <option value="">Seleccionar plataforma...</option>
+                                        <option value="" th:text="#{create.field.platform.select}">Select platform...</option>
                                         <option th:each="platform : ${platforms}"
                                                 th:value="${platform.id}"
                                                 th:text="${platform.name}">PS5</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <label for="genre" class="form-label">Género</label>
+                                    <label for="genre" class="form-label" th:text="#{create.field.genre}">Genre</label>
                                     <select class="form-select" id="genre" th:field="*{genre}">
-                                        <option value="">Seleccionar género...</option>
+                                        <option value="" th:text="#{create.field.genre.select}">Select genre...</option>
                                         <option th:each="genre : ${genres}"
                                                 th:value="${genre.id}"
                                                 th:text="${genre.name}">RPG</option>
@@ -115,38 +126,39 @@
                             </div>
 
                             <div class="mb-3" th:if="${!wishlist}">
-                                <label for="status" class="form-label">Estado</label>
+                                <label for="status" class="form-label" th:text="#{create.field.status}">Status</label>
                                 <select class="form-select" id="status" name="status">
-                                    <option value="Sin empezar" th:selected="${game.status == 'Sin empezar'}">Sin empezar</option>
-                                    <option value="Jugando" th:selected="${game.status == 'Jugando'}">Jugando</option>
-                                    <option value="Terminado" th:selected="${game.status == 'Terminado'}">Terminado</option>
-                                    <option value="Abandonado" th:selected="${game.status == 'Abandonado'}">Abandonado</option>
+                                    <option value="Not started" th:selected="${game.status == 'Not started'}" th:text="#{status.notStarted}">Not started</option>
+                                    <option value="Playing"     th:selected="${game.status == 'Playing'}"     th:text="#{status.playing}">Playing</option>
+                                    <option value="Completed"   th:selected="${game.status == 'Completed'}"   th:text="#{status.completed}">Completed</option>
+                                    <option value="Abandoned"   th:selected="${game.status == 'Abandoned'}"   th:text="#{status.abandoned}">Abandoned</option>
                                 </select>
                             </div>
 
                             <div class="mb-3">
-                                <label for="coverUrl" class="form-label">URL de la Portada</label>
+                                <label for="coverUrl" class="form-label" th:text="#{create.field.coverUrl}">Cover URL</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control" id="coverUrl" th:field="*{coverUrl}" placeholder="https://...">
                                     <button class="btn btn-outline-secondary" type="button" id="previewBtn">
-                                        <i class="fas fa-eye"></i> Ver
+                                        <i class="fas fa-eye"></i> <span th:text="#{create.field.coverUrl.btn}">Preview</span>
                                     </button>
                                 </div>
-                                <div class="form-text">Puedes pegar una URL de imagen o dejar la de IGDB.</div>
+                                <div class="form-text" th:text="#{create.field.coverUrl.hint}">You can paste an image URL or keep the one from IGDB.</div>
                                 <div class="mt-2 text-center">
-                                    <img id="coverPreview" src="" alt="Vista previa" class="img-thumbnail cover-preview">
+                                    <img id="coverPreview" src="" alt="Preview" class="img-thumbnail cover-preview">
                                 </div>
                             </div>
 
                             <div class="mb-4">
-                                <label for="notes" class="form-label">Notas</label>
-                                <textarea class="form-control" id="notes" th:field="*{notes}" rows="3" placeholder="Comentarios personales, reseña, etc..."></textarea>
+                                <label for="notes" class="form-label" th:text="#{create.field.notes}">Notes</label>
+                                <textarea class="form-control" id="notes" th:field="*{notes}" rows="3"
+                                          th:placeholder="#{create.field.notes.placeholder}"></textarea>
                             </div>
 
                             <div class="d-flex justify-content-end gap-2">
-                                <a th:href="${wishlist} ? @{/games/wishlist} : @{/games}" class="btn btn-secondary">Cancelar</a>
+                                <a th:href="${wishlist} ? @{/games/wishlist} : @{/games}" class="btn btn-secondary" th:text="#{create.btn.cancel}">Cancel</a>
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save me-1"></i> Guardar Juego
+                                    <i class="fas fa-save me-1"></i> <span th:text="#{create.btn.save}">Save Game</span>
                                 </button>
                             </div>
                         </form>
@@ -160,6 +172,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            const jsStr = document.getElementById('jsStrings') ? document.getElementById('jsStrings').dataset : {};
             const coverInput = document.getElementById('coverUrl');
             const previewBtn = document.getElementById('previewBtn');
             const previewImg = document.getElementById('coverPreview');
@@ -170,10 +183,9 @@
                     previewImg.src = url;
                     previewImg.style.display = 'inline-block';
 
-                    // Handle load error
                     previewImg.onerror = function() {
                         previewImg.style.display = 'none';
-                        alert('No se pudo cargar la imagen. Verifica la URL.');
+                        alert(jsStr.imageError || 'Could not load the image. Check the URL.');
                     };
                 } else {
                     previewImg.style.display = 'none';
@@ -182,7 +194,6 @@
 
             previewBtn.addEventListener('click', updatePreview);
 
-            // Auto-preview if URL exists on load
             if (coverInput.value) {
                 updatePreview();
             }
@@ -208,10 +219,10 @@
                 function runSteamSearch() {
                     const q = (qInput && qInput.value) ? qInput.value.trim() : '';
                     if (q.length < 2) {
-                        setStatus('Escribe al menos 2 caracteres.', true);
+                        setStatus(jsStr.minChars || 'Enter at least 2 characters.', true);
                         return;
                     }
-                    setStatus('Buscando…', false);
+                    setStatus(jsStr.searching || 'Searching…', false);
                     resultsEl.style.display = 'none';
                     resultsEl.innerHTML = '';
                     steamSearchBtn.disabled = true;
@@ -224,10 +235,11 @@
                         .then(function (hits) {
                             steamSearchBtn.disabled = false;
                             if (!hits || hits.length === 0) {
-                                setStatus('No hay resultados. Prueba otro término o introduce el Steam App ID a mano.', false);
+                                setStatus(jsStr.noResults || 'No results. Try a different term or enter the Steam App ID manually.', false);
                                 return;
                             }
-                            setStatus(hits.length + ' resultado(s). Pulsa el que coincida con tu juego.', false);
+                            const resultsMsg = (jsStr.results || '{0} result(s). Click the one that matches your game.').replace('{0}', hits.length);
+                            setStatus(resultsMsg, false);
                             resultsEl.style.display = 'block';
                             hits.forEach(function (h) {
                                 const btn = document.createElement('button');
@@ -257,7 +269,9 @@
 
                                 btn.addEventListener('click', function () {
                                     steamAppIdInput.value = h.appId;
-                                    setStatus('Seleccionado: ' + h.appId + ' — ' + (h.name || ''), false);
+                                    const selectedMsg = (jsStr.selected || 'Selected: {0} — {1}')
+                                        .replace('{0}', h.appId).replace('{1}', h.name || '');
+                                    setStatus(selectedMsg, false);
                                     resultsEl.style.display = 'none';
                                 });
 
@@ -266,7 +280,7 @@
                         })
                         .catch(function () {
                             steamSearchBtn.disabled = false;
-                            setStatus('No se pudo contactar con Steam. Inténtalo de nuevo o introduce el ID a mano.', true);
+                            setStatus(jsStr.steamError || 'Could not reach Steam. Try again or enter the ID manually.', true);
                         });
                 }
 

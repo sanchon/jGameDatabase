@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>Lista de Deseados - jGameDatabase</title>
+    <title th:text="#{wishlist.title}">Wishlist - jGameDatabase</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -33,31 +33,31 @@
 
     <div class="container">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-            <h1 class="mb-0"><i class="fas fa-heart text-danger me-2"></i>Lista de Deseados</h1>
+            <h1 class="mb-0"><i class="fas fa-heart text-danger me-2"></i><span th:text="#{wishlist.heading}">Wishlist</span></h1>
             <div class="d-flex flex-wrap gap-2">
                 <a th:href="@{/games/wishlist(sortBy=${sortBy}, sortDir=${sortDir}, fetchPrices=true)}"
                    th:class="${fetchPrices} ? 'btn btn-primary' : 'btn btn-outline-primary'"
-                   th:title="${fetchPrices} ? 'Volver a consultar precios en GG.deals' : 'Cargar precios actuales desde GG.deals'">
+                   th:title="${fetchPrices} ? #{wishlist.title.refresh} : #{wishlist.title.check}">
                     <i class="fas fa-tags"></i>
-                    <span th:text="${fetchPrices} ? 'Actualizar precios' : 'Consultar precios'">Consultar precios</span>
+                    <span th:text="${fetchPrices} ? #{wishlist.btn.refreshPrices} : #{wishlist.btn.checkPrices}">Check prices</span>
                 </a>
                 <a href="/games/new?wishlist=true" class="btn btn-success">
-                    <i class="fas fa-plus"></i> Añadir Juego
+                    <i class="fas fa-plus"></i> <span th:text="#{wishlist.btn.addGame}">Add Game</span>
                 </a>
             </div>
         </div>
 
         <div th:if="${!fetchPrices && games != null && !games.isEmpty()}" class="alert alert-light border shadow-sm py-2 small mb-4">
             <i class="fas fa-info-circle text-primary me-1"></i>
-            Pulsa <strong>Consultar precios</strong> para cargar ofertas actuales de GG.deals (requiere Steam App ID en cada juego).
+            <span th:text="#{wishlist.info.checkPricesHint}">Click Check prices to load current deals from GG.deals.</span>
         </div>
 
         <div th:if="${fetchPrices}" class="alert alert-success py-2 small mb-3">
-            <i class="fas fa-check-circle me-1"></i> Precios consultados en GG.deals para la región configurada.
+            <i class="fas fa-check-circle me-1"></i> <span th:text="#{wishlist.info.pricesFetched}">Prices fetched from GG.deals for the configured region.</span>
         </div>
 
         <div th:if="${fetchPrices && ggDealsSteamIdCount != null && ggDealsSteamIdCount == 0}" class="alert alert-warning small mb-4">
-            <i class="fas fa-exclamation-triangle me-1"></i> Ningún juego de la lista tiene <strong>Steam App ID</strong> — no se ha enviado ninguna petición a GG.deals.
+            <i class="fas fa-exclamation-triangle me-1"></i> <span th:text="#{wishlist.info.noSteamIds}">No game in the list has a Steam App ID — no request was sent to GG.deals.</span>
         </div>
 
         <!-- Sorting -->
@@ -65,27 +65,30 @@
             <div class="card-body py-2">
                 <div class="row align-items-center">
                     <div class="col-auto">
-                        <span class="fw-bold me-2">Ordenar por:</span>
+                        <span class="fw-bold me-2" th:text="#{wishlist.sort.label}">Sort by:</span>
                     </div>
                     <div class="col-auto">
                         <div class="btn-group">
                             <a th:href="@{/games/wishlist(sortBy='title', sortDir=${sortBy == 'title' ? reverseSortDir : 'asc'}, fetchPrices=${fetchPrices})}"
                                class="btn btn-sm btn-outline-secondary"
                                th:classappend="${sortBy == 'title'} ? 'active'">
-                                Título <i th:if="${sortBy == 'title'}"
-                                          th:class="${sortDir == 'asc' ? 'fas fa-sort-alpha-down' : 'fas fa-sort-alpha-up'}"></i>
+                                <span th:text="#{wishlist.sort.title}">Title</span>
+                                <i th:if="${sortBy == 'title'}"
+                                   th:class="${sortDir == 'asc' ? 'fas fa-sort-alpha-down' : 'fas fa-sort-alpha-up'}"></i>
                             </a>
                             <a th:href="@{/games/wishlist(sortBy='releaseYear', sortDir=${sortBy == 'releaseYear' ? reverseSortDir : 'desc'}, fetchPrices=${fetchPrices})}"
                                class="btn btn-sm btn-outline-secondary"
                                th:classappend="${sortBy == 'releaseYear'} ? 'active'">
-                                Año <i th:if="${sortBy == 'releaseYear'}"
-                                       th:class="${sortDir == 'asc' ? 'fas fa-sort-numeric-down' : 'fas fa-sort-numeric-up'}"></i>
+                                <span th:text="#{wishlist.sort.year}">Year</span>
+                                <i th:if="${sortBy == 'releaseYear'}"
+                                   th:class="${sortDir == 'asc' ? 'fas fa-sort-numeric-down' : 'fas fa-sort-numeric-up'}"></i>
                             </a>
                             <a th:href="@{/games/wishlist(sortBy='rating', sortDir=${sortBy == 'rating' ? reverseSortDir : 'desc'}, fetchPrices=${fetchPrices})}"
                                class="btn btn-sm btn-outline-secondary"
                                th:classappend="${sortBy == 'rating'} ? 'active'">
-                                Valoración <i th:if="${sortBy == 'rating'}"
-                                              th:class="${sortDir == 'asc' ? 'fas fa-sort-amount-down' : 'fas fa-sort-amount-up'}"></i>
+                                <span th:text="#{wishlist.sort.rating}">Rating</span>
+                                <i th:if="${sortBy == 'rating'}"
+                                   th:class="${sortDir == 'asc' ? 'fas fa-sort-amount-down' : 'fas fa-sort-amount-up'}"></i>
                             </a>
                         </div>
                     </div>
@@ -128,54 +131,57 @@
                              class="small mb-3">
                             <div th:if="${entry != null && entry.prices != null}" th:with="p=${entry.prices}" class="border rounded p-2 bg-light">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="text-muted"><i class="fas fa-tags me-1"></i>Precios GG.deals</span>
+                                    <span class="text-muted"><i class="fas fa-tags me-1"></i><span th:text="#{wishlist.price.label}">GG.deals prices</span></span>
                                     <span class="badge bg-secondary" th:if="${p.currency != null}" th:text="${p.currency}">EUR</span>
                                 </div>
                                 <table class="table table-sm table-borderless mb-0 small">
                                     <tbody>
                                     <tr>
-                                        <td class="text-muted py-1">Tienda actual</td>
+                                        <td class="text-muted py-1" th:text="#{wishlist.price.currentRetail}">Current retail</td>
                                         <td class="text-end py-1 fw-semibold" th:text="${p.currentRetail != null ? p.currentRetail : '—'}">—</td>
                                     </tr>
                                     <tr>
-                                        <td class="text-muted py-1">Keyshops actual</td>
+                                        <td class="text-muted py-1" th:text="#{wishlist.price.currentKeyshops}">Current keyshops</td>
                                         <td class="text-end py-1 fw-semibold" th:text="${p.currentKeyshops != null ? p.currentKeyshops : '—'}">—</td>
                                     </tr>
                                     <tr>
-                                        <td class="text-muted py-1">Tienda histórico</td>
+                                        <td class="text-muted py-1" th:text="#{wishlist.price.historicalRetail}">Historical retail</td>
                                         <td class="text-end py-1" th:text="${p.historicalRetail != null ? p.historicalRetail : '—'}">—</td>
                                     </tr>
                                     <tr>
-                                        <td class="text-muted py-1">Keyshops histórico</td>
+                                        <td class="text-muted py-1" th:text="#{wishlist.price.historicalKeyshops}">Historical keyshops</td>
                                         <td class="text-end py-1" th:text="${p.historicalKeyshops != null ? p.historicalKeyshops : '—'}">—</td>
                                     </tr>
                                     </tbody>
                                 </table>
-                                <a th:if="${entry != null && entry.url != null}" th:href="${entry.url}" target="_blank" rel="noopener" class="d-block text-center mt-2 small link-secondary">Abrir en GG.deals</a>
+                                <a th:if="${entry != null && entry.url != null}" th:href="${entry.url}" target="_blank" rel="noopener"
+                                   class="d-block text-center mt-2 small link-secondary" th:text="#{wishlist.price.openGgDeals}">Open on GG.deals</a>
                             </div>
                         </div>
                         <div th:if="${fetchPrices && game.steamAppId != null && (ggDealsPrices == null || !ggDealsPrices.containsKey(game.steamAppId))}"
                              class="small text-muted mb-3">
-                            <i class="fas fa-minus-circle"></i> Sin datos en GG.deals
+                            <i class="fas fa-minus-circle"></i> <span th:text="#{wishlist.price.noData}">No data on GG.deals</span>
                         </div>
                         <div th:if="${fetchPrices && game.steamAppId == null}" class="small text-muted mb-3">
-                            <i class="fas fa-steam"></i> Sin Steam App ID — edita el juego para añadirlo.
+                            <i class="fas fa-steam"></i> <span th:text="#{wishlist.price.noSteamId}">No Steam App ID — edit the game to add it.</span>
                         </div>
 
                         <div class="mt-auto d-flex justify-content-between align-items-center flex-wrap gap-1">
-                            <a th:href="@{/games/detail/{id}(id=${game.id})}" class="btn btn-outline-secondary btn-sm" title="Detalles">
+                            <a th:href="@{/games/detail/{id}(id=${game.id})}" class="btn btn-outline-secondary btn-sm"
+                               th:title="#{wishlist.btn.details}">
                                 <i class="fas fa-circle-info"></i>
                             </a>
                             <div class="btn-group flex-grow-1 me-2">
                                 <a th:href="@{/games/move-to-collection/{id}(id=${game.id})}"
                                    class="btn btn-outline-primary btn-sm"
-                                   title="Mover a Colección">
+                                   th:title="#{wishlist.btn.moveToCollection}">
                                     <i class="fas fa-download"></i>
                                 </a>
                                 <a th:href="@{/games/delete/{id}(id=${game.id})}"
                                    class="btn btn-outline-danger btn-sm"
-                                   onclick="return confirm('¿Eliminar de deseados?')"
-                                   title="Eliminar">
+                                   th:data-confirm="#{wishlist.confirm.delete}"
+                                   onclick="return confirm(this.dataset.confirm)"
+                                   th:title="#{wishlist.btn.delete}">
                                     <i class="fas fa-trash"></i>
                                 </a>
                             </div>
@@ -183,7 +189,7 @@
                                th:href="@{'https://www.metacritic.com/game/' + ${game.metacriticSlug}}"
                                target="_blank"
                                class="btn btn-dark btn-sm"
-                               title="Ver en Metacritic">
+                               title="View on Metacritic">
                                 <span class="badge bg-success">M</span>
                             </a>
                         </div>
@@ -195,9 +201,9 @@
         <!-- Empty State -->
         <div th:if="${#lists.isEmpty(games)}" class="text-center py-5">
             <div class="display-1 text-muted mb-3"><i class="far fa-heart"></i></div>
-            <h3>Tu lista de deseados está vacía</h3>
-            <p class="text-muted">¡Busca juegos y añádelos para no olvidarlos!</p>
-            <a href="/games/new?wishlist=true" class="btn btn-primary mt-3">Buscar Juegos</a>
+            <h3 th:text="#{wishlist.empty.heading}">Your wishlist is empty</h3>
+            <p class="text-muted" th:text="#{wishlist.empty.desc}">Search for games and add them so you don't forget them!</p>
+            <a href="/games/new?wishlist=true" class="btn btn-primary mt-3" th:text="#{wishlist.empty.btn}">Search Games</a>
         </div>
     </div>
 

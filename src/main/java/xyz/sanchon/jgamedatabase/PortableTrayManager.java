@@ -30,7 +30,7 @@ public class PortableTrayManager implements ApplicationListener<WebServerInitial
         String url = "http://localhost:" + port;
 
         if (!SystemTray.isSupported()) {
-            // Sin bandeja disponible (algunos escritorios Linux): al menos abrir el navegador
+            // No system tray available (some Linux desktops): at least open the browser
             openBrowser(url);
             return;
         }
@@ -39,10 +39,10 @@ public class PortableTrayManager implements ApplicationListener<WebServerInitial
         trayIcon.setImageAutoSize(true);
         trayIcon.setToolTip("jGameDatabase  –  " + url);
 
-        MenuItem openItem = new MenuItem("Abrir en el navegador");
+        MenuItem openItem = new MenuItem("Open in browser");
         openItem.addActionListener(e -> openBrowser(url));
 
-        MenuItem stopItem = new MenuItem("Detener jGameDatabase");
+        MenuItem stopItem = new MenuItem("Stop jGameDatabase");
         stopItem.addActionListener(e -> {
             SystemTray.getSystemTray().remove(trayIcon);
             new Thread(() -> {
@@ -57,22 +57,22 @@ public class PortableTrayManager implements ApplicationListener<WebServerInitial
         menu.add(stopItem);
 
         trayIcon.setPopupMenu(menu);
-        // Doble clic en el icono abre el navegador
+        // Double-clicking the icon opens the browser
         trayIcon.addActionListener(e -> openBrowser(url));
 
         try {
             SystemTray.getSystemTray().add(trayIcon);
-            // Notificación balloon para que el usuario encuentre el icono aunque esté oculto
+            // Balloon notification so the user can find the icon even if it is hidden
             trayIcon.displayMessage(
-                "jGameDatabase lista",
-                "Clic derecho en este icono para abrir el navegador o detener la aplicación.",
+                "jGameDatabase ready",
+                "Right-click this icon to open the browser or stop the application.",
                 TrayIcon.MessageType.INFO
             );
         } catch (AWTException e) {
-            System.err.println("[tray] No se pudo añadir el icono a la bandeja: " + e.getMessage());
+            System.err.println("[tray] Could not add icon to the system tray: " + e.getMessage());
         }
 
-        // Abrir el navegador automáticamente al arrancar
+        // Automatically open the browser on startup
         openBrowser(url);
     }
 

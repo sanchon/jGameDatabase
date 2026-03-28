@@ -10,22 +10,32 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="/games">Mi Colección</a>
+                    <a class="nav-link" href="/games" th:text="#{nav.collection}">My Collection</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/games/wishlist">Deseados</a>
+                    <a class="nav-link" href="/games/wishlist" th:text="#{nav.wishlist}">Wishlist</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/games/new">Añadir Juego</a>
+                    <a class="nav-link" href="/games/new" th:text="#{nav.addGame}">Add Game</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/configuration"><i class="fas fa-cog me-1"></i> Configuración</a>
+                    <a class="nav-link" href="/configuration"><i class="fas fa-cog me-1"></i> <span th:text="#{nav.settings}">Settings</span></a>
                 </li>
             </ul>
+            <!-- Language switcher -->
+            <div class="d-flex ms-3 me-2">
+                <a th:href="@{''(lang='en')}"
+                   th:classappend="${#locale.language == 'en'} ? 'fw-bold text-white' : 'text-secondary'"
+                   class="nav-link px-1 py-0" th:text="#{lang.en}">EN</a>
+                <span class="text-secondary px-1 py-0 nav-link">|</span>
+                <a th:href="@{''(lang='es')}"
+                   th:classappend="${#locale.language == 'es'} ? 'fw-bold text-white' : 'text-secondary'"
+                   class="nav-link px-1 py-0" th:text="#{lang.es}">ES</a>
+            </div>
             <form th:if="${portableMode}" action="/shutdown" method="post" class="d-flex ms-2"
-                  onsubmit="return confirm('¿Detener jGameDatabase?')">
+                  th:onsubmit="|return confirm('#{nav.stopConfirm}')|">
                 <button type="submit" class="btn btn-outline-danger btn-sm">
-                    <i class="fas fa-power-off me-1"></i>Detener
+                    <i class="fas fa-power-off me-1"></i><span th:text="#{nav.stop}">Stop</span>
                 </button>
             </form>
         </div>
