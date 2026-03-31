@@ -135,6 +135,16 @@
                                 </select>
                             </div>
 
+                            <div class="mb-3" th:if="${!wishlist}">
+                                <label for="store" class="form-label" th:text="#{create.field.store}">Format / Store</label>
+                                <select class="form-select" id="store" th:field="*{store}">
+                                    <option value="" th:text="#{create.field.store.select}">Select format...</option>
+                                    <option th:each="store : ${stores}"
+                                            th:value="${store.id}"
+                                            th:text="${store.name}">Steam</option>
+                                </select>
+                            </div>
+
                             <div class="mb-3">
                                 <label for="coverUrl" class="form-label" th:text="#{create.field.coverUrl}">Cover URL</label>
                                 <div class="input-group">
