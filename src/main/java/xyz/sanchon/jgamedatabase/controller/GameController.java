@@ -12,22 +12,29 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.util.UriComponentsBuilder;
+import xyz.sanchon.jgamedatabase.dto.BatchGameEntry;
 import xyz.sanchon.jgamedatabase.dto.GgDealsFetchResult;
 import xyz.sanchon.jgamedatabase.dto.GgDealsPriceEntry;
 import xyz.sanchon.jgamedatabase.dto.IgdbGame;
 import xyz.sanchon.jgamedatabase.dto.SteamSearchHitDto;
 import xyz.sanchon.jgamedatabase.model.Game;
+import xyz.sanchon.jgamedatabase.model.Platform;
+import xyz.sanchon.jgamedatabase.model.Store;
 import xyz.sanchon.jgamedatabase.repository.GameRepository;
 import xyz.sanchon.jgamedatabase.repository.GameStatusRepository;
 import xyz.sanchon.jgamedatabase.repository.GenreRepository;
 import xyz.sanchon.jgamedatabase.repository.PlatformRepository;
 import xyz.sanchon.jgamedatabase.repository.StoreRepository;
+import xyz.sanchon.jgamedatabase.service.BatchImportService;
 import xyz.sanchon.jgamedatabase.service.CsvService;
 import xyz.sanchon.jgamedatabase.service.GgDealsService;
 import xyz.sanchon.jgamedatabase.service.IgdbService;
 import xyz.sanchon.jgamedatabase.service.MarkdownService;
 import xyz.sanchon.jgamedatabase.service.SteamStoreSearchService;
 
+import jakarta.servlet.http.HttpSession;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -49,8 +56,14 @@ public class GameController {
     private final SteamStoreSearchService steamStoreSearchService;
     private final MarkdownService markdownService;
     private final CsvService csvService;
+    private final BatchImportService batchImportService;
 
-    public GameController(GameRepository gameRepository, GameStatusRepository gameStatusRepository, PlatformRepository platformRepository, GenreRepository genreRepository, StoreRepository storeRepository, IgdbService igdbService, GgDealsService ggDealsService, SteamStoreSearchService steamStoreSearchService, MarkdownService markdownService, CsvService csvService) {
+    public GameController(GameRepository gameRepository, GameStatusRepository gameStatusRepository,
+                          PlatformRepository platformRepository, GenreRepository genreRepository,
+                          StoreRepository storeRepository, IgdbService igdbService,
+                          GgDealsService ggDealsService, SteamStoreSearchService steamStoreSearchService,
+                          MarkdownService markdownService, CsvService csvService,
+                          BatchImportService batchImportService) {
         this.gameRepository = gameRepository;
         this.gameStatusRepository = gameStatusRepository;
         this.platformRepository = platformRepository;
@@ -61,6 +74,7 @@ public class GameController {
         this.steamStoreSearchService = steamStoreSearchService;
         this.markdownService = markdownService;
         this.csvService = csvService;
+        this.batchImportService = batchImportService;
     }
 
     private void applyStatus(Game game, String statusName) {
@@ -198,6 +212,89 @@ public class GameController {
         return isWishlist ? "redirect:/games/wishlist" : "redirect:/games";
     }
 
+    // -------------------------------------------------------------------------
+    // Batch import from CSV
+    // -------------------------------------------------------------------------
+
+    @PostMapping("/batch-upload")
+    public String batchUpload(@RequestParam("batchFile") MultipartFile file, HttpSession session) {
+        try {
+            List<BatchGameEntry> entries = batchImportService.parseCsv(file);
+            session.setAttribute("batchQueue", new ArrayList<>(entries));
+        } catch (Exception e) {
+            return "redirect:/games/new?batchError=true";
+        }
+        return "redirect:/games/batch/next";
+    }
+
+    @GetMapping("/batch/next")
+    public String batchNext(HttpSession session) {
+        @SuppressWarnings("unchecked")
+        List<BatchGameEntry> queue = (List<BatchGameEntry>) session.getAttribute("batchQueue");
+        if (queue == null || queue.isEmpty()) {
+            session.removeAttribute("batchQueue");
+            return "redirect:/games";
+        }
+
+        BatchGameEntry entry = queue.remove(0);
+        session.setAttribute("batchQueue", queue);
+        int remaining = queue.size();
+
+        // Search IGDB with the game name
+        List<IgdbGame> results = Collections.emptyList();
+        try {
+            results = igdbService.searchGames(entry.getName());
+        } catch (Exception ignored) {
+            // If IGDB is unavailable, continue with just the name from the CSV
+        }
+
+        // Resolve platform and store from CSV hints
+        Platform platform = batchImportService.resolvePlatform(entry.getPlatformHint());
+        Store store = batchImportService.resolveStore(entry.getStoreHint());
+
+        UriComponentsBuilder uri = UriComponentsBuilder.fromPath("/games/create")
+                .queryParam("batchMode", true)
+                .queryParam("batchRemaining", remaining)
+                .queryParam("wishlist", false);
+
+        if (platform != null) uri.queryParam("platformId", platform.getId());
+        if (store != null)    uri.queryParam("storeId", store.getId());
+
+        if (!results.isEmpty()) {
+            IgdbGame best = results.get(0);
+            uri.queryParam("igdbId", best.getId());
+            uri.queryParam("title", best.getName());
+            if (best.getFirstReleaseDate() != null && best.getFirstReleaseDate().length() >= 4) {
+                uri.queryParam("year", best.getFirstReleaseDate().substring(0, 4));
+            }
+            if (best.getCoverUrl() != null)  uri.queryParam("cover", best.getCoverUrl());
+            if (best.getSlug() != null)      uri.queryParam("slug", best.getSlug());
+            if (best.getTotalRating() != null) uri.queryParam("rating", best.getTotalRating());
+            if (best.getGenres() != null && !best.getGenres().isEmpty()) {
+                uri.queryParam("genre", best.getGenres().get(0).getName());
+            }
+            if (best.getPlatformNamesJoined() != null) {
+                uri.queryParam("platforms", best.getPlatformNamesJoined());
+            }
+            // Auto-fetch Steam App ID for collection games
+            if (best.getId() != null) {
+                igdbService.findSteamAppIdForIgdbGame(best.getId()).ifPresent(sid ->
+                        uri.queryParam("steamAppId", sid));
+            }
+        } else {
+            uri.queryParam("title", entry.getName());
+        }
+
+        return "redirect:" + uri.build().encode().toUriString();
+    }
+
+    @GetMapping("/batch/skip")
+    public String batchSkip(HttpSession session) {
+        return "redirect:/games/batch/next";
+    }
+
+    // -------------------------------------------------------------------------
+
     @GetMapping("/new")
     public String searchForm(@RequestParam(required = false, defaultValue = "false") boolean wishlist, Model model) {
         model.addAttribute("wishlist", wishlist);
@@ -225,8 +322,13 @@ public class GameController {
                              @RequestParam(value = "genre", required = false) String genreName,
                              @RequestParam(value = "platforms", required = false) String platformsParam,
                              @RequestParam(value = "wishlist", required = false, defaultValue = "false") boolean wishlist,
+                             @RequestParam(value = "platformId", required = false) Long platformId,
+                             @RequestParam(value = "storeId", required = false) Long storeId,
+                             @RequestParam(value = "steamAppId", required = false) Long steamAppIdParam,
+                             @RequestParam(value = "batchMode", required = false, defaultValue = "false") boolean batchMode,
+                             @RequestParam(value = "batchRemaining", required = false, defaultValue = "0") int batchRemaining,
                              Model model) {
-        
+
         Game game = new Game();
         game.setIgdbId(igdbId);
         game.setTitle(title);
@@ -234,7 +336,7 @@ public class GameController {
         game.setCoverUrl(cover);
         game.setIgdbSlug(slug);
         game.setWishlist(wishlist);
-        
+
         // Use rating as-is (0-100 scale) but round to 1 decimal
         if (rating != null) {
              game.setRating(Math.round(rating * 10.0) / 10.0);
@@ -249,7 +351,7 @@ public class GameController {
                     });
             game.setGenre(genre);
         }
-        
+
         if (!wishlist) {
             applyStatus(game, "Not started");
         } else {
@@ -257,27 +359,41 @@ public class GameController {
             game.setStatus(null);
         }
 
-        // Steam App ID: for collection it is attempted via IGDB; for wishlist it is not (unreliable) — Steam search is used in the form.
-        if (igdbId != null && !wishlist) {
+        // Steam App ID: may come from batch/next (already resolved) or from IGDB lookup
+        if (steamAppIdParam != null) {
+            game.setSteamAppId(steamAppIdParam);
+        } else if (igdbId != null && !wishlist && !batchMode) {
             igdbService.findSteamAppIdForIgdbGame(igdbId).ifPresent(game::setSteamAppId);
         }
-        
-        // Platforms: use those provided by IGDB (creating them in the DB if they don't exist),
-        // or all DB platforms as fallback if there is no IGDB info.
+
+        // Store pre-selection (batch mode or explicit param)
+        if (storeId != null) {
+            storeRepository.findById(storeId).ifPresent(game::setStore);
+        }
+
+        // Platforms list + pre-selection
         List<xyz.sanchon.jgamedatabase.model.Platform> platforms;
-        if (platformsParam != null && !platformsParam.isBlank()) {
-            platforms = Arrays.stream(platformsParam.split(","))
-                    .map(String::trim)
-                    .filter(name -> !name.isEmpty())
-                    .map(name -> platformRepository.findByName(name)
-                            .orElseGet(() -> {
-                                xyz.sanchon.jgamedatabase.model.Platform p = new xyz.sanchon.jgamedatabase.model.Platform();
-                                p.setName(name);
-                                return platformRepository.save(p);
-                            }))
-                    .collect(Collectors.toList());
-        } else {
+        if (batchMode) {
+            // In batch mode always show all platforms so the user can override
             platforms = platformRepository.findAll();
+            if (platformId != null) {
+                platformRepository.findById(platformId).ifPresent(game::setPlatform);
+            }
+        } else {
+            if (platformsParam != null && !platformsParam.isBlank()) {
+                platforms = Arrays.stream(platformsParam.split(","))
+                        .map(String::trim)
+                        .filter(name -> !name.isEmpty())
+                        .map(name -> platformRepository.findByName(name)
+                                .orElseGet(() -> {
+                                    xyz.sanchon.jgamedatabase.model.Platform p = new xyz.sanchon.jgamedatabase.model.Platform();
+                                    p.setName(name);
+                                    return platformRepository.save(p);
+                                }))
+                        .collect(Collectors.toList());
+            } else {
+                platforms = platformRepository.findAll();
+            }
         }
 
         model.addAttribute("game", game);
@@ -285,12 +401,15 @@ public class GameController {
         model.addAttribute("genres", genreRepository.findAll());
         model.addAttribute("stores", storeRepository.findAll());
         model.addAttribute("wishlist", wishlist);
+        model.addAttribute("batchMode", batchMode);
+        model.addAttribute("batchRemaining", batchRemaining);
 
         return "games/create";
     }
 
     @PostMapping("/create")
-    public String createGame(@ModelAttribute("game") Game game) {
+    public String createGame(@ModelAttribute("game") Game game,
+                             @RequestParam(value = "batchMode", required = false, defaultValue = "false") boolean batchMode) {
         if (game.isWishlist()) {
             game.setStatus(null);
             game.setGameStatus(null);
@@ -300,6 +419,9 @@ public class GameController {
             applyStatus(game, game.getStatus());
         }
         gameRepository.save(game);
+        if (batchMode) {
+            return "redirect:/games/batch/next";
+        }
         return game.isWishlist() ? "redirect:/games/wishlist" : "redirect:/games";
     }
 
