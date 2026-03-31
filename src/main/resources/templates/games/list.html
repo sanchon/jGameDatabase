@@ -161,6 +161,7 @@
                             </a>
                         </th>
                         <th th:text="#{list.col.status}">Status</th>
+                        <th th:text="#{list.col.store}">Format</th>
                         <th>
                             <a th:href="@{/games(sortBy='rating', sortDir=${sortBy == 'rating' ? reverseSortDir : 'desc'}, status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform})}"
                                class="text-decoration-none text-dark d-flex align-items-center">
@@ -208,6 +209,19 @@
                             </span>
                         </td>
                         <td>
+                            <span th:if="${game.store != null}"
+                                  th:title="${game.store.name}"
+                                  class="text-secondary">
+                                <i class="fas fa-compact-disc"
+                                   th:if="${game.store.name == 'Formato físico'}"></i>
+                                <i class="fab fa-steam"
+                                   th:if="${game.store.name == 'Steam'}"></i>
+                                <i class="fas fa-store"
+                                   th:if="${game.store.name != 'Formato físico' and game.store.name != 'Steam'}"></i>
+                                <span class="d-none d-xl-inline small ms-1" th:text="${game.store.name}">Steam</span>
+                            </span>
+                        </td>
+                        <td>
                             <div th:if="${game.rating != null}" class="d-flex align-items-center">
                                 <i class="fas fa-star text-warning me-1"></i>
                                 <span th:text="${game.rating}">9.5</span>
@@ -215,7 +229,7 @@
                         </td>
                     </tr>
                     <tr th:if="${#lists.isEmpty(games)}">
-                        <td colspan="8" class="text-center py-4 text-muted">
+                        <td colspan="9" class="text-center py-4 text-muted">
                             <i class="fas fa-ghost fa-2x mb-2"></i>
                             <p class="mb-0" th:text="#{list.empty}">No games found with the current filters.</p>
                         </td>
