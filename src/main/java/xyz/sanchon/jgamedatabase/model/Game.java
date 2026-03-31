@@ -47,6 +47,11 @@ public class Game {
     @Column(nullable = false, columnDefinition = "boolean default false")
     private boolean wishlist = false;
 
+    /** Store/format where the game was acquired (null for wishlist games). */
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "store_id")
+    private Store store;
+
     public Game() {
     }
 
@@ -162,6 +167,14 @@ public class Game {
 
     public void setWishlist(boolean wishlist) {
         this.wishlist = wishlist;
+    }
+
+    public Store getStore() {
+        return store;
+    }
+
+    public void setStore(Store store) {
+        this.store = store;
     }
 
     /**

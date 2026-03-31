@@ -88,6 +88,12 @@
                                                (game.status == 'Completed'    ? #messages.msg('status.completed')  :
                                                (game.status == 'Abandoned'    ? #messages.msg('status.abandoned')  : game.status)))}"></span>
                             </span>
+                            <span th:if="${!game.wishlist && game.store != null}"
+                                  class="badge bg-dark bg-opacity-75">
+                                <i class="fas fa-xs me-1"
+                                   th:classappend="${game.store.name == 'Formato físico' ? 'fa-compact-disc' : 'fa-store'}"></i>
+                                <span th:text="${game.store.name}">Steam</span>
+                            </span>
                             <span th:if="${game.wishlist}" class="badge bg-danger bg-opacity-75" th:text="#{detail.badge.wishlist}">Wishlist</span>
                         </div>
 

@@ -21,6 +21,7 @@ import xyz.sanchon.jgamedatabase.repository.GameRepository;
 import xyz.sanchon.jgamedatabase.repository.GameStatusRepository;
 import xyz.sanchon.jgamedatabase.repository.GenreRepository;
 import xyz.sanchon.jgamedatabase.repository.PlatformRepository;
+import xyz.sanchon.jgamedatabase.repository.StoreRepository;
 import xyz.sanchon.jgamedatabase.service.CsvService;
 import xyz.sanchon.jgamedatabase.service.GgDealsService;
 import xyz.sanchon.jgamedatabase.service.IgdbService;
@@ -42,17 +43,19 @@ public class GameController {
     private final GameStatusRepository gameStatusRepository;
     private final PlatformRepository platformRepository;
     private final GenreRepository genreRepository;
+    private final StoreRepository storeRepository;
     private final IgdbService igdbService;
     private final GgDealsService ggDealsService;
     private final SteamStoreSearchService steamStoreSearchService;
     private final MarkdownService markdownService;
     private final CsvService csvService;
 
-    public GameController(GameRepository gameRepository, GameStatusRepository gameStatusRepository, PlatformRepository platformRepository, GenreRepository genreRepository, IgdbService igdbService, GgDealsService ggDealsService, SteamStoreSearchService steamStoreSearchService, MarkdownService markdownService, CsvService csvService) {
+    public GameController(GameRepository gameRepository, GameStatusRepository gameStatusRepository, PlatformRepository platformRepository, GenreRepository genreRepository, StoreRepository storeRepository, IgdbService igdbService, GgDealsService ggDealsService, SteamStoreSearchService steamStoreSearchService, MarkdownService markdownService, CsvService csvService) {
         this.gameRepository = gameRepository;
         this.gameStatusRepository = gameStatusRepository;
         this.platformRepository = platformRepository;
         this.genreRepository = genreRepository;
+        this.storeRepository = storeRepository;
         this.igdbService = igdbService;
         this.ggDealsService = ggDealsService;
         this.steamStoreSearchService = steamStoreSearchService;
@@ -280,6 +283,7 @@ public class GameController {
         model.addAttribute("game", game);
         model.addAttribute("platforms", platforms);
         model.addAttribute("genres", genreRepository.findAll());
+        model.addAttribute("stores", storeRepository.findAll());
         model.addAttribute("wishlist", wishlist);
 
         return "games/create";
@@ -290,6 +294,7 @@ public class GameController {
         if (game.isWishlist()) {
             game.setStatus(null);
             game.setGameStatus(null);
+            game.setStore(null);
         } else {
             // game.getStatus() returns the legacy field text bound by @ModelAttribute
             applyStatus(game, game.getStatus());

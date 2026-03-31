@@ -10,10 +10,12 @@ import xyz.sanchon.jgamedatabase.model.Game;
 import xyz.sanchon.jgamedatabase.model.Genre;
 import xyz.sanchon.jgamedatabase.model.Platform;
 import xyz.sanchon.jgamedatabase.model.GameStatus;
+import xyz.sanchon.jgamedatabase.model.Store;
 import xyz.sanchon.jgamedatabase.repository.GameRepository;
 import xyz.sanchon.jgamedatabase.repository.GameStatusRepository;
 import xyz.sanchon.jgamedatabase.repository.GenreRepository;
 import xyz.sanchon.jgamedatabase.repository.PlatformRepository;
+import xyz.sanchon.jgamedatabase.repository.StoreRepository;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -28,13 +30,16 @@ public class CsvService {
     private final PlatformRepository platformRepository;
     private final GenreRepository genreRepository;
     private final GameStatusRepository gameStatusRepository;
+    private final StoreRepository storeRepository;
 
     public CsvService(GameRepository gameRepository, PlatformRepository platformRepository,
-                      GenreRepository genreRepository, GameStatusRepository gameStatusRepository) {
+                      GenreRepository genreRepository, GameStatusRepository gameStatusRepository,
+                      StoreRepository storeRepository) {
         this.gameRepository = gameRepository;
         this.platformRepository = platformRepository;
         this.genreRepository = genreRepository;
         this.gameStatusRepository = gameStatusRepository;
+        this.storeRepository = storeRepository;
     }
 
     public void importCsv(MultipartFile file) throws IOException {
@@ -154,6 +159,12 @@ public class CsvService {
                     game.setWishlist(Boolean.parseBoolean(wishlistStr));
                 }
 
+                String storeName = getRecordValue(csvRecord, "store");
+                if (storeName != null && !storeName.isEmpty()) {
+                    Store store = storeRepository.findByName(storeName).orElse(null);
+                    game.setStore(store);
+                }
+
                 gamesToSave.add(game);
             }
 
@@ -165,9 +176,9 @@ public class CsvService {
         List<Game> games = gameRepository.findAll();
 
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-             CSVPrinter csvPrinter = new CSVPrinter(new PrintWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8)), 
+             CSVPrinter csvPrinter = new CSVPrinter(new PrintWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8)),
                      CSVFormat.DEFAULT.builder()
-                             .setHeader("id", "title", "year", "platform", "genre", "status", "rating", "igdb_id", "steam_app_id", "igdb_slug", "cover_url", "notes", "wishlist")
+                             .setHeader("id", "title", "year", "platform", "genre", "status", "rating", "igdb_id", "steam_app_id", "igdb_slug", "cover_url", "notes", "wishlist", "store")
                              .build())) {
 
             for (Game game : games) {
@@ -184,7 +195,8 @@ public class CsvService {
                         game.getIgdbSlug(),
                         game.getCoverUrl(),
                         game.getNotes(),
-                        game.isWishlist()
+                        game.isWishlist(),
+                        game.getStore() != null ? game.getStore().getName() : ""
                 );
             }
 
