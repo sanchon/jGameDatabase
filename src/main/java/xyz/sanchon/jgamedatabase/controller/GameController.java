@@ -218,12 +218,16 @@ public class GameController {
 
     @PostMapping("/batch-upload")
     public String batchUpload(@RequestParam("batchFile") MultipartFile file, HttpSession session) {
+        List<BatchGameEntry> entries;
         try {
-            List<BatchGameEntry> entries = batchImportService.parseCsv(file);
-            session.setAttribute("batchQueue", new ArrayList<>(entries));
+            entries = batchImportService.parseCsv(file);
         } catch (Exception e) {
             return "redirect:/games/new?batchError=true";
         }
+        if (entries.isEmpty()) {
+            return "redirect:/games/new?batchError=true";
+        }
+        session.setAttribute("batchQueue", new ArrayList<>(entries));
         return "redirect:/games/batch/next";
     }
 

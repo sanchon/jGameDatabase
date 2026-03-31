@@ -12,6 +12,7 @@ import xyz.sanchon.jgamedatabase.repository.PlatformRepository;
 import xyz.sanchon.jgamedatabase.repository.StoreRepository;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -35,8 +36,23 @@ public class BatchImportService {
      */
     public List<BatchGameEntry> parseCsv(MultipartFile file) throws IOException {
         List<BatchGameEntry> entries = new ArrayList<>();
+
+        // Strip UTF-8 BOM (\uFEFF) if present — common in CSV files exported from
+        // Excel or Google Sheets. Without this, the first column header becomes
+        // "\uFEFFNombre", breaking name lookup.
+        byte[] bytes = file.getBytes();
+        int offset = 0;
+        if (bytes.length >= 3
+                && (bytes[0] & 0xFF) == 0xEF
+                && (bytes[1] & 0xFF) == 0xBB
+                && (bytes[2] & 0xFF) == 0xBF) {
+            offset = 3;
+        }
+
         try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
+                new InputStreamReader(
+                        new ByteArrayInputStream(bytes, offset, bytes.length - offset),
+                        StandardCharsets.UTF_8));
              CSVParser parser = new CSVParser(reader,
                      CSVFormat.DEFAULT.builder()
                              .setHeader()
