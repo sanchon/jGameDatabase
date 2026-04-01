@@ -4,7 +4,8 @@
       "Bash(dir:*)",
       "Bash(echo \"EXIT: $?\")",
       "Bash(echo $SHELL)",
-      "Bash(cmd /c \"git status\" 2>&1)"
+      "Bash(cmd /c \"git status\" 2>&1)",
+      "Bash(xargs ls:*)"
     ]
   }
 }

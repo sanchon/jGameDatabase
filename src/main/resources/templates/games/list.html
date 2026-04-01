@@ -22,22 +22,75 @@
             height: 200px;
             object-fit: cover;
         }
-.table-responsive {
+        .table-responsive {
             border-radius: 0.5rem;
             box-shadow: 0 0 10px rgba(0,0,0,0.05);
         }
-        .filter-section {
-            background-color: #f8f9fa;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
+        .filter-bar {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 2rem;
+            padding: 0.4rem 0.75rem;
         }
-        .gg-deals-debug-pre {
-            max-height: 360px;
-            overflow: auto;
-            white-space: pre-wrap;
-            word-break: break-word;
+        .filter-bar-label {
+            color: #6c757d;
             font-size: 0.8rem;
+            padding-right: 0.25rem;
+        }
+        .filter-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 2rem;
+            padding: 0.2rem 0.7rem;
+            font-size: 0.8rem;
+            color: #495057;
+            transition: border-color 0.15s, background 0.15s, color 0.15s;
+        }
+        .filter-pill i {
+            font-size: 0.7rem;
+            opacity: 0.55;
+        }
+        .filter-pill select {
+            border: none;
+            background: transparent;
+            font-size: 0.8rem;
+            padding: 0;
+            cursor: pointer;
+            outline: none;
+            color: inherit;
+            max-width: 130px;
+        }
+        .filter-pill.active {
+            background: #e7f0ff;
+            border-color: #0d6efd;
+            color: #0d6efd;
+        }
+        .filter-pill.active i {
+            opacity: 1;
+        }
+        .filter-pill.active select {
+            font-weight: 600;
+            color: #0d6efd;
+        }
+        .filter-clear {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.6rem;
+            height: 1.6rem;
+            border-radius: 50%;
+            background: #dee2e6;
+            color: #495057;
+            text-decoration: none;
+            font-size: 0.75rem;
+            transition: background 0.15s, color 0.15s;
+        }
+        .filter-clear:hover {
+            background: #dc3545;
+            color: #fff;
         }
     </style>
 </head>
@@ -70,13 +123,15 @@
         </div>
 
         <!-- Filters & Sorting -->
-        <div class="filter-section">
-            <form id="gamesFilterForm" action="/games" method="get" class="row g-3 align-items-end">
-                <input type="hidden" name="sortBy" th:value="${sortBy}">
-                <input type="hidden" name="sortDir" th:value="${sortDir}">
-                <div class="col-md-3">
-                    <label class="form-label small text-muted" th:text="#{list.filter.status}">Status</label>
-                    <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+        <form id="gamesFilterForm" action="/games" method="get">
+            <input type="hidden" name="sortBy" th:value="${sortBy}">
+            <input type="hidden" name="sortDir" th:value="${sortDir}">
+            <div class="filter-bar d-flex flex-wrap gap-2 align-items-center mb-3">
+                <span class="filter-bar-label"><i class="fas fa-filter"></i></span>
+
+                <div class="filter-pill" th:classappend="${selectedStatus != null and !selectedStatus.isEmpty()} ? 'active'">
+                    <i class="fas fa-circle-half-stroke"></i>
+                    <select name="status" onchange="this.form.submit()">
                         <option value="" th:text="#{list.filter.status.all}">All statuses</option>
                         <option value="Not started" th:selected="${selectedStatus == 'Not started'}" th:text="#{status.notStarted}">Not started</option>
                         <option value="Playing"     th:selected="${selectedStatus == 'Playing'}"     th:text="#{status.playing}">Playing</option>
@@ -84,9 +139,10 @@
                         <option value="Abandoned"   th:selected="${selectedStatus == 'Abandoned'}"   th:text="#{status.abandoned}">Abandoned</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label small text-muted" th:text="#{list.filter.genre}">Genre</label>
-                    <select name="genreId" class="form-select form-select-sm" onchange="this.form.submit()">
+
+                <div class="filter-pill" th:classappend="${selectedGenre != null} ? 'active'">
+                    <i class="fas fa-tag"></i>
+                    <select name="genreId" onchange="this.form.submit()">
                         <option value="" th:text="#{list.filter.genre.all}">All genres</option>
                         <option th:each="genre : ${genres}"
                                 th:value="${genre.id}"
@@ -95,9 +151,10 @@
                         </option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label small text-muted" th:text="#{list.filter.platform}">Platform</label>
-                    <select name="platformId" class="form-select form-select-sm" onchange="this.form.submit()">
+
+                <div class="filter-pill" th:classappend="${selectedPlatform != null} ? 'active'">
+                    <i class="fas fa-tv"></i>
+                    <select name="platformId" onchange="this.form.submit()">
                         <option value="" th:text="#{list.filter.platform.all}">All platforms</option>
                         <option th:each="platform : ${platforms}"
                                 th:value="${platform.id}"
@@ -106,34 +163,27 @@
                         </option>
                     </select>
                 </div>
-                <div class="col-md-3 d-flex align-items-end">
-                    <a href="/games" class="btn btn-outline-secondary btn-sm" th:text="#{list.filter.clear}">Clear filters</a>
-                </div>
-            </form>
-        </div>
 
-        <div th:if="${ggDealsApiCalls != null && !ggDealsApiCalls.isEmpty()}" class="card border-secondary mb-4">
-            <div class="card-header py-2 bg-secondary text-white">
-                <i class="fas fa-bug me-1"></i> <span th:text="#{list.debug.title}">GG.deals debug (last price load)</span>
-            </div>
-            <div class="card-body p-0">
-                <div th:each="call, iter : ${ggDealsApiCalls}" class="p-3" th:classappend="${!iter.last} ? ' border-bottom'">
-                    <div>
-                        <div class="small text-muted mb-1"><span th:text="#{list.debug.call}">Call</span> <span th:text="${iter.index + 1}">1</span></div>
-                        <div class="mb-2">
-                            <span class="badge bg-dark" th:text="${call.method}">GET</span>
-                            <span th:if="${call.httpStatus != null}" class="badge bg-info text-dark" th:text="|HTTP ${call.httpStatus}|">200</span>
-                        </div>
-                        <div class="fw-semibold small mb-1" th:text="#{list.debug.request}">Request</div>
-                        <pre class="bg-light border gg-deals-debug-pre p-2 mb-2" th:text="${call.requestUrlMasked}">URL</pre>
-                        <div th:if="${call.errorMessage != null}" class="alert alert-danger small py-2 mb-2" th:text="${call.errorMessage}"></div>
-                        <div class="fw-semibold small mb-1" th:text="#{list.debug.response}">Response</div>
-                        <pre class="bg-dark text-light gg-deals-debug-pre p-3 mb-0"
-                             th:text="${call.rawResponseBody != null ? call.rawResponseBody : #messages.msg('list.debug.noBody')}"></pre>
-                    </div>
+                <div class="filter-pill" th:classappend="${selectedStore != null} ? 'active'">
+                    <i class="fas fa-store"></i>
+                    <select name="storeId" onchange="this.form.submit()">
+                        <option value="" th:text="#{list.filter.store.all}">All formats</option>
+                        <option th:each="store : ${stores}"
+                                th:value="${store.id}"
+                                th:text="${store.name}"
+                                th:selected="${selectedStore == store.id}">
+                        </option>
+                    </select>
                 </div>
+
+                <a th:if="${(selectedStatus != null and !selectedStatus.isEmpty()) or selectedGenre != null or selectedPlatform != null or selectedStore != null}"
+                   href="/games"
+                   class="filter-clear"
+                   th:title="#{list.filter.clear}">
+                    <i class="fas fa-xmark"></i>
+                </a>
             </div>
-        </div>
+        </form>
 
         <!-- Games Table -->
         <div class="table-responsive bg-white">
@@ -143,7 +193,7 @@
                         <th style="width: 50px;">#</th>
                         <th style="width: 80px;" th:text="#{list.col.cover}">Cover</th>
                         <th>
-                            <a th:href="@{/games(sortBy='title', sortDir=${sortBy == 'title' ? reverseSortDir : 'asc'}, status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform})}"
+                            <a th:href="@{/games(sortBy='title', sortDir=${sortBy == 'title' ? reverseSortDir : 'asc'}, status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform}, storeId=${selectedStore})}"
                                class="text-decoration-none text-dark d-flex align-items-center">
                                 <span th:text="#{list.col.title}">Title</span>
                                 <i th:if="${sortBy == 'title'}"
@@ -153,7 +203,7 @@
                         <th th:text="#{list.col.platform}">Platform</th>
                         <th th:text="#{list.col.genre}">Genre</th>
                         <th>
-                            <a th:href="@{/games(sortBy='releaseYear', sortDir=${sortBy == 'releaseYear' ? reverseSortDir : 'desc'}, status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform})}"
+                            <a th:href="@{/games(sortBy='releaseYear', sortDir=${sortBy == 'releaseYear' ? reverseSortDir : 'desc'}, status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform}, storeId=${selectedStore})}"
                                class="text-decoration-none text-dark d-flex align-items-center">
                                 <span th:text="#{list.col.year}">Year</span>
                                 <i th:if="${sortBy == 'releaseYear'}"
@@ -163,7 +213,7 @@
                         <th th:text="#{list.col.status}">Status</th>
                         <th th:text="#{list.col.store}">Format</th>
                         <th>
-                            <a th:href="@{/games(sortBy='rating', sortDir=${sortBy == 'rating' ? reverseSortDir : 'desc'}, status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform})}"
+                            <a th:href="@{/games(sortBy='rating', sortDir=${sortBy == 'rating' ? reverseSortDir : 'desc'}, status=${selectedStatus}, genreId=${selectedGenre}, platformId=${selectedPlatform}, storeId=${selectedStore})}"
                                class="text-decoration-none text-dark d-flex align-items-center">
                                 <span th:text="#{list.col.score}">Score</span>
                                 <i th:if="${sortBy == 'rating'}"

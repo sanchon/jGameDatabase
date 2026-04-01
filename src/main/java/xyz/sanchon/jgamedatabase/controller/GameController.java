@@ -101,44 +101,50 @@ public class GameController {
     public String listGames(@RequestParam(required = false) String status,
                             @RequestParam(required = false) Long genreId,
                             @RequestParam(required = false) Long platformId,
+                            @RequestParam(required = false) Long storeId,
                             @RequestParam(defaultValue = "title") String sortBy,
                             @RequestParam(defaultValue = "asc") String sortDir,
                             Model model) {
-        
+
         // Always filter by wishlist = false for the main list
         Specification<Game> spec = Specification.where((root, query, cb) -> cb.equal(root.get("wishlist"), false));
-        
+
         if (status != null && !status.isEmpty()) {
             spec = spec.and((root, query, cb) ->
                     cb.equal(root.get("gameStatus").get("name"), status));
         }
-        
+
         if (genreId != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("genre").get("id"), genreId));
         }
-        
+
         if (platformId != null) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("platform").get("id"), platformId));
         }
 
-        org.springframework.data.domain.Sort sort = sortDir.equalsIgnoreCase("asc") ? 
-            org.springframework.data.domain.Sort.by(sortBy).ascending() : 
+        if (storeId != null) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("store").get("id"), storeId));
+        }
+
+        org.springframework.data.domain.Sort sort = sortDir.equalsIgnoreCase("asc") ?
+            org.springframework.data.domain.Sort.by(sortBy).ascending() :
             org.springframework.data.domain.Sort.by(sortBy).descending();
 
         List<Game> games = gameRepository.findAll(spec, sort);
         model.addAttribute("games", games);
-        attachGgDealsPrices(model, games);
         model.addAttribute("genres", genreRepository.findAll());
         model.addAttribute("platforms", platformRepository.findAll());
-        
+        model.addAttribute("stores", storeRepository.findAll());
+
         // Pass back current filters and sorting to the model
         model.addAttribute("selectedStatus", status);
         model.addAttribute("selectedGenre", genreId);
         model.addAttribute("selectedPlatform", platformId);
+        model.addAttribute("selectedStore", storeId);
         model.addAttribute("sortBy", sortBy);
         model.addAttribute("sortDir", sortDir);
         model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
-        
+
         return "games/list";
     }
 
@@ -169,7 +175,8 @@ public class GameController {
         model.addAttribute("sortBy", sortBy);
         model.addAttribute("sortDir", sortDir);
         model.addAttribute("reverseSortDir", sortDir.equals("asc") ? "desc" : "asc");
-        
+        model.addAttribute("stores", storeRepository.findAll());
+
         return "games/wishlist";
     }
 
@@ -429,12 +436,16 @@ public class GameController {
         return game.isWishlist() ? "redirect:/games/wishlist" : "redirect:/games";
     }
 
-    @GetMapping("/move-to-collection/{id}")
-    public String moveToCollection(@PathVariable Long id) {
+    @PostMapping("/move-to-collection/{id}")
+    public String moveToCollection(@PathVariable Long id,
+                                   @RequestParam(required = false) Long storeId) {
         Game game = gameRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Invalid game Id:" + id));
         game.setWishlist(false);
         applyStatus(game, "Not started");
+        if (storeId != null) {
+            storeRepository.findById(storeId).ifPresent(game::setStore);
+        }
         gameRepository.save(game);
         return "redirect:/games";
     }
