@@ -16,6 +16,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import xyz.sanchon.jgamedatabase.dto.BatchGameEntry;
 import xyz.sanchon.jgamedatabase.dto.GgDealsFetchResult;
 import xyz.sanchon.jgamedatabase.dto.GgDealsPriceEntry;
+import xyz.sanchon.jgamedatabase.dto.GgDealsPriceDetails;
 import xyz.sanchon.jgamedatabase.dto.IgdbGame;
 import xyz.sanchon.jgamedatabase.dto.SteamSearchHitDto;
 import xyz.sanchon.jgamedatabase.model.Game;
@@ -37,6 +38,7 @@ import jakarta.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -207,6 +209,18 @@ public class GameController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
         applyStatus(game, status);
         gameRepository.save(game);
+        return "redirect:/games/detail/" + id;
+    }
+
+    @PostMapping("/detail/{id}/target-price")
+    public String updateTargetPrice(@PathVariable Long id,
+                                    @RequestParam(value = "targetPrice", required = false) Double targetPrice) {
+        Game game = gameRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        if (game.isWishlist()) {
+            game.setTargetPrice(targetPrice);
+            gameRepository.save(game);
+        }
         return "redirect:/games/detail/" + id;
     }
 
@@ -428,6 +442,7 @@ public class GameController {
         } else {
             // game.getStatus() returns the legacy field text bound by @ModelAttribute
             applyStatus(game, game.getStatus());
+            game.setTargetPrice(null);
         }
         gameRepository.save(game);
         if (batchMode) {
@@ -442,6 +457,7 @@ public class GameController {
         Game game = gameRepository.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("Invalid game Id:" + id));
         game.setWishlist(false);
+        game.setTargetPrice(null);
         applyStatus(game, "Not started");
         if (storeId != null) {
             storeRepository.findById(storeId).ifPresent(game::setStore);
@@ -483,5 +499,50 @@ public class GameController {
         model.addAttribute("ggDealsPrices", result.getPrices());
         model.addAttribute("ggDealsApiCalls", result.getApiCalls());
         model.addAttribute("ggDealsSteamIdCount", steamIds.size());
+
+        // For each wishlist game with a target price, check if the best current
+        // GG.deals price is at or below that target.
+        Map<Long, Boolean> priceBelowTarget = new HashMap<>();
+        for (Game game : games) {
+            if (game.getTargetPrice() == null || game.getSteamAppId() == null) {
+                continue;
+            }
+            GgDealsPriceEntry entry = result.getPrices().get(game.getSteamAppId());
+            if (entry == null || entry.getPrices() == null) {
+                continue;
+            }
+            Double bestCurrent = minCurrentPrice(entry.getPrices());
+            if (bestCurrent != null) {
+                priceBelowTarget.put(game.getId(), bestCurrent <= game.getTargetPrice());
+            }
+        }
+        model.addAttribute("priceBelowTarget", priceBelowTarget);
+    }
+
+    private Double minCurrentPrice(GgDealsPriceDetails p) {
+        Double retail = parsePrice(p.getCurrentRetail());
+        Double keyshops = parsePrice(p.getCurrentKeyshops());
+        if (retail == null) return keyshops;
+        if (keyshops == null) return retail;
+        return Math.min(retail, keyshops);
+    }
+
+    /** Parses a GG.deals price string (e.g. "\u20AC49.99" or "49,99") into a Double. */
+    private static Double parsePrice(String raw) {
+        if (raw == null || raw.isBlank()) return null;
+        String s = raw.replaceAll("[^0-9.,\\-]", "").trim();
+        if (s.isEmpty()) return null;
+        int lastDot = s.lastIndexOf('.');
+        int lastComma = s.lastIndexOf(',');
+        if (lastDot > lastComma) {
+            s = s.replace(",", "");
+        } else if (lastComma > lastDot) {
+            s = s.replace(".", "").replace(",", ".");
+        }
+        try {
+            return Double.parseDouble(s);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

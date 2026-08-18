@@ -102,6 +102,14 @@
                             <dd class="col-sm-9 col-lg-10" th:if="${game.steamAppId != null}" th:text="${game.steamAppId}">730</dd>
                         </dl>
 
+                        <form th:if="${game.wishlist}" th:action="@{/games/detail/{id}/target-price(id=${game.id})}" method="post"
+                              class="d-flex align-items-center gap-2 mt-3">
+                            <label class="form-label mb-0 text-muted small fw-semibold" th:text="#{detail.targetPrice.label}">Target price:</label>
+                            <input type="number" name="targetPrice" class="form-control form-control-sm" style="width: 120px;"
+                                   step="0.01" min="0" th:value="${game.targetPrice}">
+                            <button type="submit" class="btn btn-sm btn-primary" th:text="#{detail.targetPrice.save}">Save</button>
+                        </form>
+
                         <div class="mt-4">
                             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
                                 <h3 class="h6 text-muted mb-0">

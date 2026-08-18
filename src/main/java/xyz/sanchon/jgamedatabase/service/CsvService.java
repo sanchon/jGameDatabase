@@ -150,6 +150,15 @@ public class CsvService {
                     }
                 }
 
+                String targetPriceStr = getRecordValue(csvRecord, "target_price");
+                if (targetPriceStr != null && !targetPriceStr.isEmpty()) {
+                    try {
+                        game.setTargetPrice(Double.parseDouble(targetPriceStr));
+                    } catch (NumberFormatException e) {
+                        game.setTargetPrice(null);
+                    }
+                }
+
                 game.setIgdbSlug(getRecordValue(csvRecord, "igdb_slug"));
                 game.setCoverUrl(getRecordValue(csvRecord, "cover_url"));
                 game.setNotes(getRecordValue(csvRecord, "notes"));
@@ -157,6 +166,11 @@ public class CsvService {
                 String wishlistStr = getRecordValue(csvRecord, "wishlist");
                 if (wishlistStr != null && !wishlistStr.isEmpty()) {
                     game.setWishlist(Boolean.parseBoolean(wishlistStr));
+                }
+
+                // Target price only makes sense for wishlist games
+                if (!game.isWishlist()) {
+                    game.setTargetPrice(null);
                 }
 
                 String storeName = getRecordValue(csvRecord, "store");
@@ -178,7 +192,7 @@ public class CsvService {
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
              CSVPrinter csvPrinter = new CSVPrinter(new PrintWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8)),
                      CSVFormat.DEFAULT.builder()
-                             .setHeader("id", "title", "year", "platform", "genre", "status", "rating", "igdb_id", "steam_app_id", "igdb_slug", "cover_url", "notes", "wishlist", "store")
+                             .setHeader("id", "title", "year", "platform", "genre", "status", "rating", "igdb_id", "steam_app_id", "target_price", "igdb_slug", "cover_url", "notes", "wishlist", "store")
                              .build())) {
 
             for (Game game : games) {
@@ -192,6 +206,7 @@ public class CsvService {
                         game.getRating(),
                         game.getIgdbId(),
                         game.getSteamAppId(),
+                        game.getTargetPrice(),
                         game.getIgdbSlug(),
                         game.getCoverUrl(),
                         game.getNotes(),

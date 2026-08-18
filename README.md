@@ -82,13 +82,13 @@ Available at **http://localhost:8080**. See the [Configuration](#configuration) 
 |------|-------------|
 | **Home** | Application entry point with shortcuts to collection, wishlist, and add game. |
 | **My Collection** | List of owned games: filters by status, genre, and platform (applied when changing the dropdown), sortable by title, year, or rating. The title is a direct link to the detail page. |
-| **Wishlist** | List of desired games; on-demand price search on GG.deals. |
+| **Wishlist** | List of desired games with an optional per-game **target price**; on-demand price search on GG.deals with a below/above-target indicator. |
 | **Add game** | Search on IGDB and entry form. The platforms dropdown is automatically populated with the platforms IGDB reports for that game; if any does not exist in the local database, it is created when loading the form. For wishlist items, an additional search on the **Steam store** to save the **Steam App ID** (required for prices). |
-| **Detail** | View `/games/detail/{id}`: cover, metadata, links to IGDB / Metacritic; **Markdown notes** with inline editing and rendered view. **Status can be changed directly** from the detail page without leaving it. Includes delete button with confirmation. |
+| **Detail** | View `/games/detail/{id}`: cover, metadata, links to IGDB / Metacritic; **Markdown notes** with inline editing and rendered view. **Status can be changed directly** from the detail page without leaving it. For wishlist games, the **target price** can also be set from the detail page. Includes delete button with confirmation. |
 | **Game statuses** | Canonical statuses: *Not started*, *Playing*, *Completed*, *Abandoned*. Each status has its own color and icon in the lists and detail. The automatic migration on startup converts any legacy text (e.g. `Completado`, `Playing`, `Backlog`) to the corresponding canonical status. |
 | **Configuration** | Accessible from the navigation bar on all pages (`/configuration`). Manages **IGDB** and **GG.deals** credentials. Includes option to **reset the database** and to **enable/disable the H2 console** (shows the link and credentials when active). |
 | **CSV Backups** | Generates a CSV on the server (`/app/backups` in Docker, `~/.jgamedatabase/backups` in portable, `./backups` in dev) from `/configuration`, with a timestamped name. Different from browser export. |
-| **CSV** | Export and import **all** games (collection and wishlist) from the collection view. Exported/imported fields include: `id`, `titulo`, `año`, `plataforma`, `genero`, `estado`, `rating`, `igdb_id`, `steam_app_id`, `igdb_slug`, `portada_url`, `notas`, and `wishlist`. On import, platforms and genres that do not exist in the database are created automatically. |
+| **CSV** | Export and import **all** games (collection and wishlist) from the collection view. Exported/imported fields include: `id`, `titulo`, `año`, `plataforma`, `genero`, `estado`, `rating`, `igdb_id`, `steam_app_id`, `target_price`, `igdb_slug`, `portada_url`, `notas`, and `wishlist`. On import, platforms and genres that do not exist in the database are created automatically. |
 
 External API credentials can be configured via `application-local.properties`, environment variables, or directly from the UI on the [Configuration](#configuration) page.
 

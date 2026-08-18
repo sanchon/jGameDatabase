@@ -113,6 +113,13 @@
                                 <div class="form-text" th:text="#{create.field.steamAppId.hint}">You can paste the number from the store URL.</div>
                             </div>
 
+                            <!-- Wishlist: target price -->
+                            <div class="mb-3" th:if="${wishlist}">
+                                <label for="targetPrice" class="form-label" th:text="#{create.field.targetPrice}">Target price</label>
+                                <input type="number" class="form-control" id="targetPrice" th:field="*{targetPrice}" step="0.01" min="0">
+                                <div class="form-text" th:text="#{create.field.targetPrice.hint}">The price at which you would buy this game. Shown on the wishlist and compared with GG.deals prices.</div>
+                            </div>
+
                             <div class="mb-3" th:if="${!wishlist}">
                                 <label for="steamAppIdCollection" class="form-label" th:text="#{create.field.steamAppIdCollection.label}">Steam App ID</label>
                                 <input type="number" class="form-control" id="steamAppIdCollection" th:field="*{steamAppId}" min="1" placeholder="Optional">

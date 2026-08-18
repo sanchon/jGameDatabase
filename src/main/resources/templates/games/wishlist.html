@@ -90,6 +90,13 @@
                                 <i th:if="${sortBy == 'rating'}"
                                    th:class="${sortDir == 'asc' ? 'fas fa-sort-amount-down' : 'fas fa-sort-amount-up'}"></i>
                             </a>
+                            <a th:href="@{/games/wishlist(sortBy='targetPrice', sortDir=${sortBy == 'targetPrice' ? reverseSortDir : 'asc'}, fetchPrices=${fetchPrices})}"
+                               class="btn btn-sm btn-outline-secondary"
+                               th:classappend="${sortBy == 'targetPrice'} ? 'active'">
+                                <span th:text="#{wishlist.sort.target}">Target price</span>
+                                <i th:if="${sortBy == 'targetPrice'}"
+                                   th:class="${sortDir == 'asc' ? 'fas fa-sort-numeric-down' : 'fas fa-sort-numeric-up'}"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -126,6 +133,12 @@
                             <i class="far fa-calendar-alt"></i> <span th:text="${game.releaseYear}">2023</span>
                         </p>
 
+                        <p class="card-text small mb-2" th:if="${game.targetPrice != null}">
+                            <i class="fas fa-bullseye text-info"></i>
+                            <span th:text="#{wishlist.price.targetLabel}">Target</span>:
+                            <span class="fw-semibold" th:text="${#numbers.formatDecimal(game.targetPrice, 1, 2)}">0.00</span>
+                        </p>
+
                         <div th:if="${fetchPrices && game.steamAppId != null && ggDealsPrices != null && ggDealsPrices.containsKey(game.steamAppId)}"
                              th:with="entry=${ggDealsPrices.get(game.steamAppId)}"
                              class="small mb-3">
@@ -154,6 +167,15 @@
                                     </tr>
                                     </tbody>
                                 </table>
+                                <div th:if="${game.targetPrice != null && priceBelowTarget != null && priceBelowTarget.containsKey(game.id)}"
+                                     class="mt-2">
+                                    <span th:if="${priceBelowTarget.get(game.id)}" class="badge bg-success">
+                                        <i class="fas fa-check-circle"></i> <span th:text="#{wishlist.price.targetBelow}">Below target</span>
+                                    </span>
+                                    <span th:unless="${priceBelowTarget.get(game.id)}" class="badge bg-secondary">
+                                        <i class="fas fa-arrow-up"></i> <span th:text="#{wishlist.price.targetAbove}">Above target</span>
+                                    </span>
+                                </div>
                                 <a th:if="${entry != null && entry.url != null}" th:href="${entry.url}" target="_blank" rel="noopener"
                                    class="d-block text-center mt-2 small link-secondary" th:text="#{wishlist.price.openGgDeals}">Open on GG.deals</a>
                             </div>

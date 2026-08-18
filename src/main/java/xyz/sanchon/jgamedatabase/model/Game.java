@@ -42,6 +42,9 @@ public class Game {
     /** Steam App ID (for prices via GG.deals). Optional. */
     private Long steamAppId;
 
+    /** Target price for wishlist games (the price at which the user would buy). Optional. */
+    private Double targetPrice;
+
     // New field to differentiate between possessed and wishlist games
     // true = wishlist, false/null = possessed
     @Column(nullable = false, columnDefinition = "boolean default false")
@@ -159,6 +162,14 @@ public class Game {
 
     public void setSteamAppId(Long steamAppId) {
         this.steamAppId = steamAppId;
+    }
+
+    public Double getTargetPrice() {
+        return targetPrice;
+    }
+
+    public void setTargetPrice(Double targetPrice) {
+        this.targetPrice = targetPrice;
     }
 
     public boolean isWishlist() {
