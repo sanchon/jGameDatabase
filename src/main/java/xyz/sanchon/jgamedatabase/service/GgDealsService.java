@@ -35,6 +35,13 @@ public class GgDealsService {
     @Value("${ggdeals.region:es}")
     private String region;
 
+    /** Minimum interval between real GG.deals API calls, in milliseconds. */
+    @Value("${ggdeals.min-interval-ms:300000}")
+    private long minIntervalMs;
+
+    private long lastFetchTime = 0L;
+    private Map<Long, GgDealsPriceEntry> lastPrices = Map.of();
+
     public GgDealsService(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
         this.webClient = webClientBuilder.build();
         this.objectMapper = objectMapper;
@@ -42,18 +49,36 @@ public class GgDealsService {
 
     /**
      * Fetches prices by Steam App ID and includes request/response traces for debugging.
+     *
+     * Calls to the GG.deals API are rate-limited: at most one real request per
+     * {@code ggdeals.min-interval-ms} (default 5 minutes). Requests made inside that
+     * window are served from the in-memory cache.
      */
-    public GgDealsFetchResult fetchPricesBySteamAppIdsWithDebug(List<Long> steamAppIds) {
+    public synchronized GgDealsFetchResult fetchPricesBySteamAppIdsWithDebug(List<Long> steamAppIds) {
+        List<Long> distinct = steamAppIds == null ? List.of()
+                : steamAppIds.stream().filter(id -> id != null && id > 0).distinct().collect(Collectors.toList());
+        if (distinct.isEmpty()) {
+            return new GgDealsFetchResult(Map.of(), List.of());
+        }
+
+        long now = System.currentTimeMillis();
+        if (now - lastFetchTime < minIntervalMs) {
+            log.debug("GG.deals API rate-limited: serving cached prices for {} Steam App ID(s)", distinct.size());
+            Map<Long, GgDealsPriceEntry> cached = distinct.stream()
+                    .filter(lastPrices::containsKey)
+                    .collect(Collectors.toMap(id -> id, lastPrices::get));
+            return new GgDealsFetchResult(cached, List.of(), true);
+        }
+
+        GgDealsFetchResult result = doFetch(distinct);
+        lastPrices = result.getPrices();
+        lastFetchTime = now;
+        return result;
+    }
+
+    private GgDealsFetchResult doFetch(List<Long> distinct) {
         Map<Long, GgDealsPriceEntry> out = new HashMap<>();
         List<GgDealsApiCallLog> logs = new ArrayList<>();
-
-        if (steamAppIds == null || steamAppIds.isEmpty()) {
-            return new GgDealsFetchResult(out, logs);
-        }
-        List<Long> distinct = steamAppIds.stream().filter(id -> id != null && id > 0).distinct().collect(Collectors.toList());
-        if (distinct.isEmpty()) {
-            return new GgDealsFetchResult(out, logs);
-        }
 
         for (int i = 0; i < distinct.size(); i += MAX_IDS_PER_REQUEST) {
             List<Long> chunk = distinct.subList(i, Math.min(i + MAX_IDS_PER_REQUEST, distinct.size()));

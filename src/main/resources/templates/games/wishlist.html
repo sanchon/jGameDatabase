@@ -25,6 +25,11 @@
         .badge-genre {
             background-color: #17a2b8;
         }
+        .price-drop {
+            border: 2px solid #198754 !important;
+            box-shadow: 0 0 14px rgba(25, 135, 84, 0.5);
+            background-color: #f2fbf6;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -54,6 +59,16 @@
 
         <div th:if="${fetchPrices}" class="alert alert-success py-2 small mb-3">
             <i class="fas fa-check-circle me-1"></i> <span th:text="#{wishlist.info.pricesFetched}">Prices fetched from GG.deals for the configured region.</span>
+        </div>
+
+        <div th:if="${fetchPrices && ggDealsCached}" class="alert alert-info py-2 small mb-3">
+            <i class="fas fa-clock me-1"></i> <span th:text="#{wishlist.info.cachedPrices}">Prices are from a recent check (GG.deals API rate limit).</span>
+        </div>
+
+        <div th:if="${fetchPrices && priceBelowTargetCount != null && priceBelowTargetCount > 0}"
+             class="alert alert-success py-2 small mb-3 fw-semibold">
+            <i class="fas fa-fire me-1"></i>
+            <span th:text="#{wishlist.info.targetHits(${priceBelowTargetCount})}">N games at or below their target price!</span>
         </div>
 
         <div th:if="${fetchPrices && ggDealsSteamIdCount != null && ggDealsSteamIdCount == 0}" class="alert alert-warning small mb-4">
@@ -106,13 +121,20 @@
         <!-- Games Grid -->
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
             <div class="col" th:each="game : ${games}">
-                <div class="card game-card h-100">
+                <div class="card game-card h-100"
+                     th:classappend="${priceBelowTarget != null && priceBelowTarget.get(game.id)} ? 'price-drop'">
                     <div class="position-relative">
                         <img th:src="${game.coverUrl != null ? game.coverUrl : 'https://via.placeholder.com/264x352?text=No+Cover'}"
                              class="card-img-top cover-img" alt="Cover">
                         <div class="position-absolute top-0 end-0 m-2">
                             <span class="badge bg-warning text-dark" th:if="${game.rating > 0}">
                                 <i class="fas fa-star"></i> <span th:text="${game.rating}"></span>
+                            </span>
+                        </div>
+                        <div class="position-absolute top-0 start-0 m-2"
+                             th:if="${priceBelowTarget != null && priceBelowTarget.get(game.id)}">
+                            <span class="badge bg-success shadow-sm">
+                                <i class="fas fa-arrow-down me-1"></i><span th:text="#{wishlist.price.dropped}">Target reached!</span>
                             </span>
                         </div>
                     </div>

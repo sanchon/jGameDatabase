@@ -112,6 +112,19 @@ There are three ways to configure credentials, in order of precedence:
 2. **`application-local.properties`**: file ignored by Git, recommended for local development.
 3. **Environment variables**: useful for CI/CD or containers when you don't want to touch files.
 
+### GG.deals API rate limiting
+
+To avoid hitting GG.deals rate limits (and possible bans), the app only performs **one real API
+request every `ggdeals.min-interval-ms`** (default `300000` = 5 minutes). Requests within that
+window — from the wishlist "Check prices" button or the Homepage widget — are served from an
+in-memory cache. Tune it if needed:
+
+```properties
+ggdeals.min-interval-ms=300000
+```
+
+Set it to `0` to disable the rate limit (not recommended).
+
 ### `local` profile and secrets
 
 By default, `application.properties` activates `spring.profiles.active=local`. The file `src/main/resources/application-local.properties` is intended for **local credentials** and is **ignored by Git** (see `.gitignore`).
@@ -245,6 +258,100 @@ java -jar build/libs/jGameDatabase-1.1.3.jar
 - **H2 inspection**: while the app is running use the web console (`/h2-console`); if the app is stopped you can open the file directly from IntelliJ (see [Connecting from IntelliJ](#connecting-from-intellij-database-plugin-or-another-external-client) section).
 
 ---
+
+## Homepage (gethomepage) integration
+
+jGameDatabase exposes a JSON endpoint that [gethomepage](https://gethomepage.dev) can consume
+with its `customapi` widget to show wishlist stats.
+
+### The API
+
+```
+GET /api/widgets/wishlist
+```
+
+Response:
+
+```json
+{
+  "wishlistTotal": 12,
+  "wishlistWithTarget": 8,
+  "wishlistBelowTarget": 3
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `wishlistTotal` | Games currently in the wishlist. Always fresh (database query). |
+| `wishlistWithTarget` | Wishlist games that have a target price set. |
+| `wishlistBelowTarget` | Wishlist games whose current GG.deals price (retail or keyshops) is at or below their target price. |
+
+`wishlistBelowTarget` needs the GG.deals API key configured and a Steam App ID on each game.
+The GG.deals API is rate-limited globally: at most one real request every
+`ggdeals.min-interval-ms` (default 5 minutes). Requests within that window — from the widget or
+the wishlist "Check prices" button — are served from an in-memory cache.
+
+Test it manually:
+
+```bash
+curl http://localhost:8080/api/widgets/wishlist
+```
+
+### Option A — widget inside a service card (`services.yaml`)
+
+```yaml
+- Applications:
+    - jGameDatabase:
+        href: http://localhost:8080
+        description: Colección de videojuegos
+        widget:
+          type: customapi
+          url: http://localhost:8080/api/widgets/wishlist
+          refreshInterval: 300000 # 5 min (300000 ms), matches the server-side cache
+          mappings:
+            - field: wishlistTotal
+              label: En wishlist
+              format: number
+            - field: wishlistWithTarget
+              label: Con precio objetivo
+              format: number
+            - field: wishlistBelowTarget
+              label: Bajo el objetivo
+              format: number
+```
+
+### Option B — standalone widget (`widgets.yaml`)
+
+```yaml
+- customapi:
+    url: http://localhost:8080/api/widgets/wishlist
+    refreshInterval: 300000
+    mappings:
+      - field: wishlistTotal
+        label: Wishlist
+        format: number
+      - field: wishlistBelowTarget
+        label: Below target
+        format: number
+```
+
+### Networking between containers
+
+If both Homepage and jGameDatabase run in Docker, use the service/container name instead of
+`localhost`:
+
+```yaml
+url: http://jgamedatabase:8080/api/widgets/wishlist
+```
+
+- Same `docker-compose.yml` (or a shared custom network): use the jGameDatabase container/service name.
+- jGameDatabase on the host, Homepage in Docker: use `http://host.docker.internal:8080/...`
+  (on Linux you may need `--add-host=host.docker.internal:host-gateway`).
+- To find the jGameDatabase container IP:
+  `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' jgamedatabase`.
+
+> The endpoint is unauthenticated, like the rest of the app. Don't expose it publicly without
+> putting it behind a reverse proxy or authentication.
 
 ## Docker and Docker Hub
 

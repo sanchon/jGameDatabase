@@ -38,12 +38,14 @@ This is a **Spring Boot 3.2.3 / Java 21** personal game collection manager using
 xyz.sanchon.jgamedatabase
 ├── (root)         # JGameDatabaseApplication, StartupListener, PortableTrayManager (profile "portable")
 ├── controller/    # MVC controllers (HomeController, GameController, ConfigurationController,
-│                  # ShutdownController [portable], PortableModelAdvice [portable, @ControllerAdvice])
+│                  # ShutdownController [portable], PortableModelAdvice [portable, @ControllerAdvice],
+│                  # ApiController [JSON widget endpoints])
 ├── model/         # JPA entities (Game, Genre, Platform, GameStatus, Store, AppConfiguration)
 ├── repository/    # Spring Data JPA repositories (incl. GameStatusRepository, StoreRepository)
-├── service/       # Business logic + external API clients (incl. BackupService, BatchImportService)
+├── service/       # Business logic + external API clients (incl. BackupService, BatchImportService,
+│                  # WishlistStatsService, GgDealsPriceUtils)
 ├── config/        # H2ConsoleAccessFilter — runtime gate for /h2-console/*; WebMvcConfig
-├── dto/           # API response DTOs (IGDB, GG.deals, Steam) + BatchGameEntry
+├── dto/           # API response DTOs (IGDB, GG.deals, Steam) + BatchGameEntry, WishlistStats
 └── bootstrap/     # DataInitializer (@Order 1) → StatusMigrationService (@Order 2) → StoreSeedService (@Order 3)
 ```
 
@@ -86,6 +88,7 @@ Schema is auto-managed via `spring.jpa.hibernate.ddl-auto=update` (adds columns,
 - **Shared navbar** via Thymeleaf fragment `fragments/navbar.html` — used by all templates
 - **Move to collection**: `POST /games/move-to-collection/{id}` moves a wishlist game into the owned collection
 - **Target price on wishlist**: `Game.targetPrice` (`Double`) lets users set a per-game price objective from the create form (wishlist only) or the detail page (`POST /games/detail/{id}/target-price`). The wishlist shows the target and, after fetching GG.deals prices, a "below/above target" badge comparing the best current price. Exported/imported as CSV column `target_price`.
+- **Widget stats endpoint** (`GET /api/widgets/wishlist`): JSON with `wishlistTotal`, `wishlistWithTarget`, `wishlistBelowTarget` for dashboards like gethomepage. Price parsing/comparison shared via `GgDealsPriceUtils`. GG.deals API calls are rate-limited centrally in `GgDealsService` (default 5 min via `ggdeals.min-interval-ms`).
 - **Edit page removed**: game status is changed inline on the detail page (`POST /games/detail/{id}/status`); the old `templates/games/edit.html` (orphaned, unreferenced) has been deleted
 
 ### Portable mode (`portable` Spring profile)

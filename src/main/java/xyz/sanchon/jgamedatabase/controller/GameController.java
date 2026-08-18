@@ -16,7 +16,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import xyz.sanchon.jgamedatabase.dto.BatchGameEntry;
 import xyz.sanchon.jgamedatabase.dto.GgDealsFetchResult;
 import xyz.sanchon.jgamedatabase.dto.GgDealsPriceEntry;
-import xyz.sanchon.jgamedatabase.dto.GgDealsPriceDetails;
 import xyz.sanchon.jgamedatabase.dto.IgdbGame;
 import xyz.sanchon.jgamedatabase.dto.SteamSearchHitDto;
 import xyz.sanchon.jgamedatabase.model.Game;
@@ -29,6 +28,7 @@ import xyz.sanchon.jgamedatabase.repository.PlatformRepository;
 import xyz.sanchon.jgamedatabase.repository.StoreRepository;
 import xyz.sanchon.jgamedatabase.service.BatchImportService;
 import xyz.sanchon.jgamedatabase.service.CsvService;
+import xyz.sanchon.jgamedatabase.service.GgDealsPriceUtils;
 import xyz.sanchon.jgamedatabase.service.GgDealsService;
 import xyz.sanchon.jgamedatabase.service.IgdbService;
 import xyz.sanchon.jgamedatabase.service.MarkdownService;
@@ -499,6 +499,7 @@ public class GameController {
         model.addAttribute("ggDealsPrices", result.getPrices());
         model.addAttribute("ggDealsApiCalls", result.getApiCalls());
         model.addAttribute("ggDealsSteamIdCount", steamIds.size());
+        model.addAttribute("ggDealsCached", result.isCached());
 
         // For each wishlist game with a target price, check if the best current
         // GG.deals price is at or below that target.
@@ -511,38 +512,16 @@ public class GameController {
             if (entry == null || entry.getPrices() == null) {
                 continue;
             }
-            Double bestCurrent = minCurrentPrice(entry.getPrices());
+            Double bestCurrent = GgDealsPriceUtils.bestCurrent(entry.getPrices());
             if (bestCurrent != null) {
                 priceBelowTarget.put(game.getId(), bestCurrent <= game.getTargetPrice());
             }
         }
         model.addAttribute("priceBelowTarget", priceBelowTarget);
-    }
 
-    private Double minCurrentPrice(GgDealsPriceDetails p) {
-        Double retail = parsePrice(p.getCurrentRetail());
-        Double keyshops = parsePrice(p.getCurrentKeyshops());
-        if (retail == null) return keyshops;
-        if (keyshops == null) return retail;
-        return Math.min(retail, keyshops);
-    }
-
-    /** Parses a GG.deals price string (e.g. "\u20AC49.99" or "49,99") into a Double. */
-    private static Double parsePrice(String raw) {
-        if (raw == null || raw.isBlank()) return null;
-        String s = raw.replaceAll("[^0-9.,\\-]", "").trim();
-        if (s.isEmpty()) return null;
-        int lastDot = s.lastIndexOf('.');
-        int lastComma = s.lastIndexOf(',');
-        if (lastDot > lastComma) {
-            s = s.replace(",", "");
-        } else if (lastComma > lastDot) {
-            s = s.replace(".", "").replace(",", ".");
-        }
-        try {
-            return Double.parseDouble(s);
-        } catch (NumberFormatException e) {
-            return null;
-        }
+        long priceBelowTargetCount = priceBelowTarget.values().stream()
+                .filter(Boolean::booleanValue)
+                .count();
+        model.addAttribute("priceBelowTargetCount", priceBelowTargetCount);
     }
 }
