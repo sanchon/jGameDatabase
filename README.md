@@ -272,7 +272,7 @@ The workflow [`.github/workflows/docker-publish.yml`](.github/workflows/docker-p
 
 The image is published as **`<username>/jgamedatabase`** with tags:
 
-- `latest` (only on the repository's default branch),
+- `latest` (updated on every released tag `v*`),
 - version like `1.2.0` when pushing a tag `v1.2.0`,
 - `sha-<short>` with the commit.
 

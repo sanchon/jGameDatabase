@@ -100,4 +100,4 @@ Used for the jpackage-generated portable executable (`application-portable.prope
 
 ### Docker
 
-Multi-stage Dockerfile (JDK 21 build → JRE runtime, non-root user). GitHub Actions publishes to Docker Hub on push to `master` or `v*` tags.
+Multi-stage Dockerfile (JDK 21 build → JRE runtime, non-root user). GitHub Actions publishes to Docker Hub when a `v*` tag is pushed or the workflow is run manually; every released tag also updates the `latest` image tag.
